@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orion Pathfinders | 管理后台</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --ink: #1a1714;
+  --ink-light: #4a453f;
+  --ink-muted: #8c8278;
+  --gold: #b8956a;
+  --gold-light: #d4b896;
+  --gold-pale: #f5ede0;
+  --cream: #faf7f2;
+  --white: #ffffff;
+  --border: rgba(184,149,106,0.2);
+  --border-soft: rgba(26,23,20,0.07);
+  --sidebar-bg: #1a1714;
+  --sidebar-text: rgba(250,247,242,0.7);
+  --sidebar-active: #b8956a;
+  --green: #27ae60; --green-bg: #f0faf5;
+  --amber: #e67e22; --amber-bg: #fef9f0;
+  --red: #e74c3c;   --red-bg: #fef0f0;
+  --blue: #2980b9;  --blue-bg: #f0f6fb;
+  --gray: #95a5a6;  --gray-bg: #f8f9fa;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif; background: var(--cream); color: var(--ink); display: flex; min-height: 100vh; }
+
+/* ── LOGIN ── */
+#login-screen {
+  position: fixed; inset: 0; background: var(--ink);
+  display: flex; align-items: center; justify-content: center; z-index: 1000;
+}
+.login-box {
+  background: var(--cream); border-radius: 8px;
+  padding: 48px 40px; width: 360px; text-align: center;
+}
+.login-logo { font-size: 13px; letter-spacing: 0.25em; color: var(--gold); margin-bottom: 8px; }
+.login-title { font-size: 22px; font-weight: 300; margin-bottom: 32px; }
+.login-input {
+  width: 100%; padding: 12px 16px; margin-bottom: 12px;
+  border: 1px solid var(--border-soft); border-radius: 4px;
+  background: var(--white); font-size: 15px; outline: none;
+  transition: border-color 0.2s;
+}
+.login-input:focus { border-color: var(--gold); }
+.login-btn {
+  width: 100%; padding: 13px; background: var(--gold); color: var(--white);
+  border: none; border-radius: 4px; font-size: 15px; cursor: pointer;
+  transition: background 0.2s;
+}
+.login-btn:hover { background: var(--gold-light); }
+.login-err { color: var(--red); font-size: 13px; margin-top: 10px; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: 220px; background: var(--sidebar-bg); flex-shrink: 0;
+  display: flex; flex-direction: column;
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 50;
+}
+.sidebar-logo {
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.sidebar-logo-name { color: var(--gold); font-size: 15px; font-weight: 400; letter-spacing: 0.05em; }
+.sidebar-logo-sub { color: rgba(250,247,242,0.35); font-size: 11px; margin-top: 2px; }
+.sidebar-nav { flex: 1; padding: 16px 0; overflow-y: auto; }
+.nav-section-label {
+  padding: 12px 20px 6px;
+  font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: rgba(250,247,242,0.25);
+}
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 20px; cursor: pointer;
+  color: var(--sidebar-text); font-size: 13px;
+  transition: all 0.15s; border-left: 2px solid transparent;
+}
+.nav-item:hover { color: var(--cream); background: rgba(255,255,255,0.05); }
+.nav-item.active { color: var(--gold); border-left-color: var(--gold); background: rgba(184,149,106,0.08); }
+.nav-icon { font-size: 16px; width: 20px; text-align: center; }
+.nav-badge {
+  margin-left: auto; background: var(--red); color: white;
+  font-size: 10px; padding: 1px 6px; border-radius: 10px; min-width: 18px; text-align: center;
+}
+.sidebar-footer {
+  padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.07);
+  font-size: 12px; color: rgba(250,247,242,0.3);
+}
+.logout-btn {
+  display: block; width: 100%; padding: 8px; margin-top: 8px;
+  background: transparent; border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 4px; color: rgba(250,247,242,0.5); font-size: 12px;
+  cursor: pointer; transition: all 0.2s;
+}
+.logout-btn:hover { border-color: var(--red); color: var(--red); }
+
+/* ── MAIN ── */
+.main { margin-left: 220px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+.topbar {
+  background: var(--white); border-bottom: 1px solid var(--border-soft);
+  padding: 0 28px; height: 56px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 40;
+}
+.topbar-title { font-size: 16px; font-weight: 500; }
+.topbar-right { display: flex; align-items: center; gap: 16px; }
+.topbar-date { font-size: 13px; color: var(--ink-muted); }
+.content { padding: 28px; flex: 1; }
+
+/* ── CARDS ── */
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+.stat-card {
+  background: var(--white); border: 1px solid var(--border-soft);
+  border-radius: 8px; padding: 20px 22px;
+}
+.stat-label { font-size: 12px; color: var(--ink-muted); margin-bottom: 8px; }
+.stat-value { font-size: 28px; font-weight: 300; line-height: 1; }
+.stat-sub { font-size: 12px; color: var(--ink-muted); margin-top: 6px; }
+
+/* ── TABLE ── */
+.table-card {
+  background: var(--white); border: 1px solid var(--border-soft);
+  border-radius: 8px; overflow: hidden; margin-bottom: 24px;
+}
+.table-header {
+  padding: 16px 20px; border-bottom: 1px solid var(--border-soft);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.table-title { font-size: 15px; font-weight: 500; }
+.table-actions { display: flex; gap: 8px; }
+.btn {
+  padding: 7px 14px; border-radius: 4px; font-size: 13px;
+  cursor: pointer; transition: all 0.15s; border: 1px solid var(--border-soft);
+  background: var(--white); color: var(--ink);
+}
+.btn:hover { background: var(--cream); }
+.btn-primary { background: var(--gold); color: white; border-color: var(--gold); }
+.btn-primary:hover { background: var(--gold-light); }
+.btn-sm { padding: 4px 10px; font-size: 12px; }
+.btn-danger { color: var(--red); border-color: var(--red); }
+.btn-danger:hover { background: var(--red-bg); }
+
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { padding: 10px 16px; text-align: left; font-size: 11px; font-weight: 500; letter-spacing: 0.05em; color: var(--ink-muted); background: var(--cream); border-bottom: 1px solid var(--border-soft); }
+td { padding: 12px 16px; border-bottom: 1px solid var(--border-soft); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #fdfcfa; }
+
+/* ── BADGES ── */
+.badge {
+  display: inline-flex; align-items: center;
+  padding: 3px 9px; border-radius: 12px; font-size: 11px; font-weight: 500;
+}
+.badge-new      { background: var(--blue-bg); color: var(--blue); }
+.badge-pending  { background: var(--amber-bg); color: var(--amber); }
+.badge-quoted   { background: #f0f0fb; color: #6c5ce7; }
+.badge-confirmed{ background: var(--green-bg); color: var(--green); }
+.badge-completed{ background: var(--gray-bg); color: var(--gray); }
+.badge-cancelled{ background: var(--red-bg); color: var(--red); }
+.badge-available{ background: var(--green-bg); color: var(--green); }
+.badge-booked   { background: var(--gray-bg); color: var(--gray); }
+.badge-blocked  { background: var(--red-bg); color: var(--red); }
+.badge-draft    { background: var(--gray-bg); color: var(--gray); }
+.badge-sent     { background: var(--amber-bg); color: var(--amber); }
+.badge-accepted { background: var(--green-bg); color: var(--green); }
+.badge-received { background: var(--green-bg); color: var(--green); }
+
+/* ── CALENDAR ADMIN ── */
+.cal-admin-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 6px; }
+.cal-admin-cell {
+  padding: 10px 6px; text-align: center; border-radius: 6px;
+  border: 1.5px solid var(--border-soft); font-size: 13px;
+  cursor: pointer; transition: all 0.15s; position: relative;
+}
+.cal-admin-cell:hover { border-color: var(--gold); background: var(--gold-pale); }
+.cal-admin-cell.empty { background: transparent; border-color: transparent; cursor: default; }
+.cal-admin-cell.past  { color: #ccc; cursor: default; }
+.cal-admin-cell.available { border-color: rgba(39,174,96,0.3); background: var(--green-bg); }
+.cal-admin-cell.pending   { border-color: rgba(230,126,34,0.3); background: var(--amber-bg); }
+.cal-admin-cell.booked    { border-color: rgba(149,165,166,0.3); background: var(--gray-bg); }
+.cal-admin-cell.blocked   { border-color: rgba(231,76,60,0.3);  background: var(--red-bg); }
+.cal-admin-cell.multi     { border-style: dashed; }
+.cal-dot { width: 5px; height: 5px; border-radius: 50%; margin: 3px auto 0; }
+.dot-green  { background: var(--green); }
+.dot-amber  { background: var(--amber); }
+.dot-gray   { background: var(--gray); }
+.dot-red    { background: var(--red); }
+
+/* ── MODAL ── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center; z-index: 200;
+}
+.modal {
+  background: var(--white); border-radius: 10px;
+  width: 520px; max-width: 95vw; max-height: 90vh; overflow-y: auto;
+  padding: 28px;
+}
+.modal-title { font-size: 17px; font-weight: 500; margin-bottom: 20px; }
+.modal-close { float: right; cursor: pointer; font-size: 20px; color: var(--ink-muted); line-height: 1; }
+.form-group { margin-bottom: 16px; }
+.form-label { display: block; font-size: 12px; color: var(--ink-muted); margin-bottom: 6px; letter-spacing: 0.04em; }
+.form-input, .form-select, .form-textarea {
+  width: 100%; padding: 10px 12px; border: 1px solid var(--border-soft);
+  border-radius: 4px; font-size: 14px; outline: none; background: var(--cream);
+  transition: border-color 0.2s; font-family: inherit;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--gold); background: var(--white); }
+.form-textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+/* ── DETAIL PANEL ── */
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.detail-item { }
+.detail-key { font-size: 11px; color: var(--ink-muted); letter-spacing: 0.05em; margin-bottom: 3px; }
+.detail-val { font-size: 14px; }
+
+/* ── EMPTY ── */
+.empty-state { text-align: center; padding: 60px 20px; color: var(--ink-muted); font-size: 14px; }
+.empty-icon { font-size: 36px; margin-bottom: 12px; }
+
+/* ── LOADING ── */
+.loading { text-align: center; padding: 40px; color: var(--ink-muted); font-size: 14px; }
+
+/* ── QUOTE BUILDER ── */
+.quote-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.quote-row label { flex: 1; font-size: 13px; color: var(--ink-light); }
+.quote-row input { width: 120px; padding: 7px 10px; border: 1px solid var(--border-soft); border-radius: 4px; font-size: 13px; text-align: right; outline: none; background: var(--cream); }
+.quote-row input:focus { border-color: var(--gold); background: var(--white); }
+.quote-total { font-size: 18px; font-weight: 500; color: var(--gold); padding: 12px 0; border-top: 1px solid var(--border-soft); margin-top: 8px; display: flex; justify-content: space-between; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  .sidebar { width: 60px; }
+  .sidebar-logo-name, .sidebar-logo-sub, .nav-section-label, .nav-item span:not(.nav-icon), .sidebar-footer { display: none; }
+  .main { margin-left: 60px; }
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+  .form-row { grid-template-columns: 1fr; }
+}
+
+/* page sections */
+.page { display: none; }
+.page.active { display: block; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">ORION PATHFINDERS</div>
+    <div class="login-title">管理员登录</div>
+    <input class="login-input" type="password" id="pwd-input" placeholder="输入管理密码" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" onclick="doLogin()">登录</button>
+    <div class="login-err" id="login-err"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none;width:100%;display:none">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-name">Orion Pathfinders</div>
+    <div class="sidebar-logo-sub">管理后台</div>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-section-label">概览</div>
+    <div class="nav-item active" onclick="showPage('dashboard')" id="nav-dashboard">
+      <span class="nav-icon">📊</span><span>仪表板</span>
+    </div>
+    <div class="nav-section-label">业务管理</div>
+    <div class="nav-item" onclick="showPage('bookings')" id="nav-bookings">
+      <span class="nav-icon">📋</span><span>预约管理</span>
+      <span class="nav-badge" id="new-badge" style="display:none">0</span>
+    </div>
+    <div class="nav-item" onclick="showPage('customers')" id="nav-customers">
+      <span class="nav-icon">👥</span><span>客户管理</span>
+    </div>
+    <div class="nav-item" onclick="showPage('quotes')" id="nav-quotes">
+      <span class="nav-icon">💰</span><span>报价管理</span>
+    </div>
+    <div class="nav-item" onclick="showPage('payments')" id="nav-payments">
+      <span class="nav-icon">💳</span><span>付款记录</span>
+    </div>
+    <div class="nav-item" onclick="showPage('itineraries')" id="nav-itineraries">
+      <span class="nav-icon">🗺️</span><span>行程管理</span>
+    </div>
+    <div class="nav-section-label">设置</div>
+    <div class="nav-item" onclick="showPage('calendar')" id="nav-calendar">
+      <span class="nav-icon">📅</span><span>档期管理</span>
+    </div>
+    <div class="nav-item" onclick="showPage('settings')" id="nav-settings">
+      <span class="nav-icon">⚙️</span><span>系统设置</span>
+    </div>
+  </div>
+  <div class="sidebar-footer">
+    <div>Leon · Orion Pathfinders</div>
+    <button class="logout-btn" onclick="logout()">退出登录</button>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="page-title">仪表板</div>
+    <div class="topbar-right">
+      <div class="topbar-date" id="today-date"></div>
+    </div>
+  </div>
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">新预约</div>
+          <div class="stat-value" id="stat-new">—</div>
+          <div class="stat-sub">待处理</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">本月确认</div>
+          <div class="stat-value" id="stat-confirmed">—</div>
+          <div class="stat-sub">已确认行程</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">客户总数</div>
+          <div class="stat-value" id="stat-customers">—</div>
+          <div class="stat-sub">累计客户</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">本月收款</div>
+          <div class="stat-value" id="stat-revenue">—</div>
+          <div class="stat-sub">USD 已收</div>
+        </div>
+      </div>
+      <div class="table-card">
+        <div class="table-header">
+          <div class="table-title">最新预约</div>
+          <button class="btn btn-sm" onclick="showPage('bookings')">查看全部</button>
+        </div>
+        <div id="dashboard-bookings"><div class="loading">加载中...</div></div>
+      </div>
+    </div>
+
+    <!-- BOOKINGS -->
+    <div class="page" id="page-bookings">
+      <div class="table-card">
+        <div class="table-header">
+          <div class="table-title">预约申请管理</div>
+          <div class="table-actions">
+            <select class="form-select btn" id="booking-filter" onchange="loadBookings()" style="width:auto;padding:7px 12px">
+              <option value="">全部状态</option>
+              <option value="new">新申请</option>
+              <option value="pending">洽询中</option>
+              <option value="quoted">已报价</option>
+              <option value="confirmed">已确认</option>
+              <option value="completed">已完成</option>
+              <option value="cancelled">已取消</option>
+            </select>
+          </div>
+        </div>
+        <div id="bookings-table"><div class="loading">加载中...</div></div>
+      </div>
+    </div>
+
+    <!-- CUSTOMERS -->
+    <div class="page" id="page-customers">
+      <div class="table-card">
+        <div class="table-header">
+          <div class="table-title">客户资料管理</div>
+          <button class="btn btn-primary" onclick="openNewCustomer()">+ 新建客户</button>
+        </div>
+        <div id="customers-table"><div class="loading">加载中...</div></div>
+      </div>
+    </div>
+
+    <!-- QUOTES -->
+    <div class="page" id="page-quotes">
+      <div class="table-card">
+        <div class="table-header">
+          <div class="table-title">报价管理</div>
+          <button class="btn btn-primary" onclick="openNewQuote()">+ 新建报价</button>
+        </div>
+        <div id="quotes-table"><div class="loading">加载中...</div></div>
+      </div>
+    </div>
+
+    <!-- PAYMENTS -->
+    <div class="page" id="page-payments">
+      <div class="table-card">
+        <div class="table-header">
+          <div class="table-title">付款记录</div>
+          <button class="btn btn-primary" onclick="openNewPayment()">+ 记录付款</button>
+        </div>
+        <div id="payments-table"><div class="loading">加载中...</div></div>
+      </div>
+    </div>
+
+    <!-- ITINERARIES -->
+    <div class="page" id="page-itineraries">
+      <div class="table-card">
+        <div class="table-header">
+          <div class="table-title">行程管理</div>
+          <button class="btn btn-primary" onclick="openNewItinerary()">+ 新建行程</button>
+        </div>
+        <div id="itineraries-table"><div class="loading">加载中...</div></div>
+      </div>
+    </div>
+
+    <!-- CALENDAR ADMIN -->
+    <div class="page" id="page-calendar">
+      <div class="table-card">
+        <div class="table-header">
+          <div style="display:flex;align-items:center;gap:12px">
+            <button class="btn btn-sm" onclick="calPrev()">‹</button>
+            <div class="table-title" id="cal-month-title">档期管理</div>
+            <button class="btn btn-sm" onclick="calNext()">›</button>
+          </div>
+          <button class="btn btn-primary" onclick="openAddSlot()">+ 添加档期</button>
+        </div>
+        <div style="padding:20px">
+          <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:8px;text-align:center">
+            <div style="font-size:11px;color:var(--ink-muted)">日</div><div style="font-size:11px;color:var(--ink-muted)">一</div>
+            <div style="font-size:11px;color:var(--ink-muted)">二</div><div style="font-size:11px;color:var(--ink-muted)">三</div>
+            <div style="font-size:11px;color:var(--ink-muted)">四</div><div style="font-size:11px;color:var(--ink-muted)">五</div>
+            <div style="font-size:11px;color:var(--ink-muted)">六</div>
+          </div>
+          <div class="cal-admin-grid" id="cal-admin-grid"></div>
+          <div style="display:flex;gap:16px;margin-top:16px;flex-wrap:wrap">
+            <span style="font-size:12px;display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;background:var(--green-bg);border:1px solid var(--green);border-radius:2px;display:inline-block"></span>可预约</span>
+            <span style="font-size:12px;display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;background:var(--amber-bg);border:1px solid var(--amber);border-radius:2px;display:inline-block"></span>洽询中</span>
+            <span style="font-size:12px;display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;background:var(--gray-bg);border:1px solid var(--gray);border-radius:2px;display:inline-block"></span>已预约</span>
+            <span style="font-size:12px;display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;background:var(--red-bg);border:1px solid var(--red);border-radius:2px;display:inline-block"></span>不开放</span>
+          </div>
+        </div>
+        <div id="slots-list" style="padding:0 20px 20px"></div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="page" id="page-settings">
+      <div class="table-card">
+        <div class="table-header"><div class="table-title">系统设置</div></div>
+        <div id="settings-content" style="padding:24px"><div class="loading">加载中...</div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- MODALS -->
+<div id="modal-overlay" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modal-content"></div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://ehzaucucynwyuhflbxmw.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVoemF1Y3VjeW53eXVoZmxieG13Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1NTkzMjAsImV4cCI6MjA5NDEzNTMyMH0.mfT96M36KZi230LwcXan6BxN47R6IH6GkBt9-v7NWuk';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let adminPwd = '';
+let calYear, calMonth;
+const now = new Date();
+
+// ── UTILS ──
+const fmt = d => d ? new Date(d).toLocaleDateString('zh-CN',{month:'short',day:'numeric'}) : '—';
+const fmtFull = d => d ? new Date(d).toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric'}) : '—';
+const statusLabel = {new:'新申请',pending:'洽询中',quoted:'已报价',confirmed:'已确认',completed:'已完成',cancelled:'已取消'};
+const periodLabel = {am:'上午',pm:'下午',full_day:'全天'};
+
+function badge(status) {
+  const labels = {new:'新申请',pending:'洽询中',quoted:'已报价',confirmed:'已确认',completed:'已完成',cancelled:'已取消',
+    available:'可预约',booked:'已预约',blocked:'不开放',draft:'草稿',sent:'已发送',accepted:'已接受',rejected:'已拒绝',
+    received:'已收款',failed:'失败',refunded:'已退款'};
+  return `<span class="badge badge-${status}">${labels[status]||status}</span>`;
+}
+
+// ── LOGIN ──
+async function doLogin() {
+  const pwd = document.getElementById('pwd-input').value;
+  const { data } = await sb.from('admin_settings').select('setting_value').eq('setting_key','admin_password').single();
+  const correct = data?.setting_value || 'orion2024';
+  if (pwd === correct) {
+    adminPwd = pwd;
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    initApp();
+  } else {
+    document.getElementById('login-err').textContent = '密码错误，请重试';
+  }
+}
+function logout() {
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('pwd-input').value = '';
+}
+
+// ── INIT ──
+function initApp() {
+  const d = new Date();
+  document.getElementById('today-date').textContent = d.toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
+  calYear = d.getFullYear(); calMonth = d.getMonth()+1;
+  loadDashboard();
+}
+
+// ── NAV ──
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.getElementById('nav-'+name).classList.add('active');
+  const titles = {dashboard:'仪表板',bookings:'预约管理',customers:'客户管理',quotes:'报价管理',payments:'付款记录',itineraries:'行程管理',calendar:'档期管理',settings:'系统设置'};
+  document.getElementById('page-title').textContent = titles[name]||name;
+  const loaders = {bookings:loadBookings,customers:loadCustomers,quotes:loadQuotes,payments:loadPayments,itineraries:loadItineraries,calendar:loadCalendarAdmin,settings:loadSettings};
+  if (loaders[name]) loaders[name]();
+}
+
+// ── MODAL ──
+function openModal(html) {
+  document.getElementById('modal-content').innerHTML = html;
+  document.getElementById('modal-overlay').style.display = 'flex';
+}
+function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
+
+// ── DASHBOARD ──
+async function loadDashboard() {
+  const [bRes, cRes, pRes] = await Promise.all([
+    sb.from('bookings').select('id,status,created_at'),
+    sb.from('customers').select('id,created_at'),
+    sb.from('payments').select('amount,currency,payment_status,paid_at')
+  ]);
+  const bookings = bRes.data||[];
+  const customers = cRes.data||[];
+  const payments = pRes.data||[];
+  const thisMonth = new Date(); thisMonth.setDate(1); thisMonth.setHours(0,0,0,0);
+  document.getElementById('stat-new').textContent = bookings.filter(b=>b.status==='new').length;
+  document.getElementById('stat-confirmed').textContent = bookings.filter(b=>b.status==='confirmed'&&new Date(b.created_at)>=thisMonth).length;
+  document.getElementById('stat-customers').textContent = customers.length;
+  const rev = payments.filter(p=>p.payment_status==='received'&&p.currency==='USD'&&new Date(p.paid_at)>=thisMonth).reduce((s,p)=>s+parseFloat(p.amount||0),0);
+  document.getElementById('stat-revenue').textContent = '$'+rev.toLocaleString();
+  const newBadge = document.getElementById('new-badge');
+  const newCount = bookings.filter(b=>b.status==='new').length;
+  newBadge.textContent = newCount; newBadge.style.display = newCount>0?'':'none';
+
+  const { data: recent } = await sb.from('bookings').select('id,status,start_date,end_date,destination,guest_count,created_at,customers(name,wechat)').order('created_at',{ascending:false}).limit(8);
+  renderBookingsTable('dashboard-bookings', recent||[], true);
+}
+
+// ── BOOKINGS ──
+async function loadBookings() {
+  const filter = document.getElementById('booking-filter')?.value || '';
+  let q = sb.from('bookings').select('id,status,start_date,end_date,destination,guest_count,service_type,country_area,created_at,customers(name,wechat,phone)').order('created_at',{ascending:false});
+  if (filter) q = q.eq('status',filter);
+  const { data } = await q;
+  renderBookingsTable('bookings-table', data||[], false);
+}
+
+function renderBookingsTable(targetId, rows, compact) {
+  const el = document.getElementById(targetId);
+  if (!rows.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div>暂无预约</div>'; return; }
+  el.innerHTML = `<table>
+    <thead><tr>
+      <th>客户</th><th>日期</th><th>目的地</th><th>人数</th><th>状态</th><th>提交时间</th><th>操作</th>
+    </tr></thead>
+    <tbody>${rows.map(b=>`
+      <tr>
+        <td><strong>${b.customers?.name||'—'}</strong><br><span style="font-size:11px;color:var(--ink-muted)">${b.customers?.wechat||b.customers?.phone||''}</span></td>
+        <td>${fmt(b.start_date)}${b.end_date&&b.end_date!==b.start_date?' → '+fmt(b.end_date):''}</td>
+        <td>${b.destination||b.country_area||'—'}</td>
+        <td>${b.guest_count||'—'}人</td>
+        <td>${badge(b.status)}</td>
+        <td style="color:var(--ink-muted)">${fmt(b.created_at)}</td>
+        <td><button class="btn btn-sm" onclick="viewBooking('${b.id}')">查看</button></td>
+      </tr>`).join('')}
+    </tbody></table>`;
+}
+
+async function viewBooking(id) {
+  const { data: b } = await sb.from('bookings').select('*,customers(*)').eq('id',id).single();
+  if (!b) return;
+  const statuses = ['new','pending','quoted','confirmed','completed','cancelled'];
+  openModal(`
+    <span class="modal-close" onclick="closeModal()">×</span>
+    <div class="modal-title">预约详情</div>
+    <div class="detail-grid" style="margin-bottom:20px">
+      <div class="detail-item"><div class="detail-key">客户姓名</div><div class="detail-val">${b.customers?.name||'—'}</div></div>
+      <div class="detail-item"><div class="detail-key">微信</div><div class="detail-val">${b.customers?.wechat||'—'}</div></div>
+      <div class="detail-item"><div class="detail-key">电话</div><div class="detail-val">${b.customers?.phone||'—'}</div></div>
+      <div class="detail-item"><div class="detail-key">邮箱</div><div class="detail-val">${b.customers?.email||'—'}</div></div>
+      <div class="detail-item"><div class="detail-key">出行日期</div><div class="detail-val">${fmtFull(b.start_date)}${b.end_date&&b.end_date!==b.start_date?' → '+fmtFull(b.end_date):''}</div></div>
+      <div class="detail-item"><div class="detail-key">人数</div><div class="detail-val">${b.guest_count||'—'}人</div></div>
+      <div class="detail-item"><div class="detail-key">目的地</div><div class="detail-val">${b.destination||'—'}</div></div>
+      <div class="detail-item"><div class="detail-key">服务类型</div><div class="detail-val">${b.service_type||'—'}</div></div>
+    </div>
+    ${b.message?`<div class="form-group"><div class="form-label">客户需求</div><div style="background:var(--cream);padding:12px;border-radius:4px;font-size:14px;line-height:1.6">${b.message}</div></div>`:''}
+    <div class="form-group">
+      <div class="form-label">修改状态</div>
+      <select class="form-select" id="booking-status-sel">
+        ${statuses.map(s=>`<option value="${s}"${b.status===s?' selected':''}>${statusLabel[s]}</option>`).join('')}
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">关闭</button>
+      <button class="btn btn-primary" onclick="updateBookingStatus('${b.id}')">保存状态</button>
+    </div>`);
+}
+
+async function updateBookingStatus(id) {
+  const status = document.getElementById('booking-status-sel').value;
+  await sb.from('bookings').update({status}).eq('id',id);
+  closeModal(); loadBookings(); loadDashboard();
+}
+
+// ── CUSTOMERS ──
+async function loadCustomers() {
+  const { data } = await sb.from('customers').select('*').order('created_at',{ascending:false});
+  const el = document.getElementById('customers-table');
+  if (!data?.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">👥</div>暂无客户</div>'; return; }
+  el.innerHTML = `<table>
+    <thead><tr><th>姓名</th><th>微信</th><th>电话</th><th>邮箱</th><th>来源</th><th>添加时间</th><th>操作</th></tr></thead>
+    <tbody>${data.map(c=>`
+      <tr>
+        <td><strong>${c.name}</strong>${c.country?`<br><span style="font-size:11px;color:var(--ink-muted)">${c.country}</span>`:''}</td>
+        <td>${c.wechat||'—'}</td>
+        <td>${c.phone||'—'}</td>
+        <td style="font-size:12px">${c.email||'—'}</td>
+        <td><span style="font-size:12px;color:var(--ink-muted)">${c.source||'—'}</span></td>
+        <td style="color:var(--ink-muted)">${fmt(c.created_at)}</td>
+        <td><button class="btn btn-sm" onclick="editCustomer('${c.id}')">编辑</button></td>
+      </tr>`).join('')}
+    </tbody></table>`;
+}
+
+function openNewCustomer() { editCustomer(null); }
+async function editCustomer(id) {
+  let c = {};
+  if (id) { const { data } = await sb.from('customers').select('*').eq('id',id).single(); c = data||{}; }
+  openModal(`
+    <span class="modal-close" onclick="closeModal()">×</span>
+    <div class="modal-title">${id?'编辑客户':'新建客户'}</div>
+    <div class="form-row">
+      <div class="form-group"><div class="form-label">姓名 *</div><input class="form-input" id="c-name" value="${c.name||''}"></div>
+      <div class="form-group"><div class="form-label">微信号</div><input class="form-input" id="c-wechat" value="${c.wechat||''}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><div class="form-label">电话</div><input class="form-input" id="c-phone" value="${c.phone||''}"></div>
+      <div class="form-group"><div class="form-label">邮箱</div><input class="form-input" id="c-email" value="${c.email||''}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><div class="form-label">来源渠道</div>
+        <select class="form-select" id="c-source">
+          ${['官网','微信','朋友介绍','小红书','微博','其他'].map(s=>`<option${c.source===s?' selected':''}>${s}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group"><div class="form-label">所在国家</div><input class="form-input" id="c-country" value="${c.country||''}"></div>
+    </div>
+    <div class="form-group"><div class="form-label">备注</div><textarea class="form-textarea" id="c-notes">${c.notes||''}</textarea></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveCustomer('${id||''}')">保存</button>
+    </div>`);
+}
+
+async function saveCustomer(id) {
+  const payload = {
+    name: document.getElementById('c-name').value.trim(),
+    wechat: document.getElementById('c-wechat').value.trim(),
+    phone: document.getElementById('c-phone').value.trim(),
+    email: document.getElementById('c-email').value.trim(),
+    source: document.getElementById('c-source').value,
+    country: document.getElementById('c-country').value.trim(),
+    notes: document.getElementById('c-notes').value.trim(),
+  };
+  if (!payload.name) { alert('请填写姓名'); return; }
+  if (id) await sb.from('customers').update(payload).eq('id',id);
+  else await sb.from('customers').insert([payload]);
+  closeModal(); loadCustomers();
+}
+
+// ── QUOTES ──
+async function loadQuotes() {
+  const { data } = await sb.from('quotes').select('*,customers(name),bookings(start_date,destination)').order('created_at',{ascending:false});
+  const el = document.getElementById('quotes-table');
+  if (!data?.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">💰</div>暂无报价</div>'; return; }
+  el.innerHTML = `<table>
+    <thead><tr><th>报价编号</th><th>客户</th><th>行程</th><th>总价</th><th>定金</th><th>状态</th><th>操作</th></tr></thead>
+    <tbody>${data.map(q=>`
+      <tr>
+        <td style="font-family:monospace;font-size:12px">${q.quote_number}</td>
+        <td>${q.customers?.name||'—'}</td>
+        <td style="font-size:12px;color:var(--ink-muted)">${q.bookings?.destination||fmt(q.bookings?.start_date)||'—'}</td>
+        <td><strong>${q.currency} ${parseFloat(q.total_amount||0).toLocaleString()}</strong></td>
+        <td>${q.currency} ${parseFloat(q.deposit_required||0).toLocaleString()}</td>
+        <td>${badge(q.status)}</td>
+        <td><button class="btn btn-sm" onclick="viewQuote('${q.id}')">查看</button></td>
+      </tr>`).join('')}
+    </tbody></table>`;
+}
+
+async function openNewQuote() {
+  const { data: customers } = await sb.from('customers').select('id,name').order('created_at',{ascending:false});
+  const { data: bookings } = await sb.from('bookings').select('id,start_date,destination,customers(name)').in('status',['pending','new']).order('created_at',{ascending:false});
+  const qNum = 'QT-'+Date.now().toString().slice(-6);
+  openModal(`
+    <span class="modal-close" onclick="closeModal()">×</span>
+    <div class="modal-title">新建报价</div>
+    <div class="form-row">
+      <div class="form-group"><div class="form-label">报价编号</div><input class="form-input" id="q-num" value="${qNum}"></div>
+      <div class="form-group"><div class="form-label">币种</div>
+        <select class="form-select" id="q-currency">
+          ${['USD','RMB','CAD','MXN'].map(c=>`<option>${c}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><div class="form-label">客户</div>
+        <select class="form-select" id="q-customer">
+          <option value="">选择客户</option>
+          ${(customers||[]).map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group"><div class="form-label">关联预约</div>
+        <select class="form-select" id="q-booking">
+          <option value="">选择预约（可选）</option>
+          ${(bookings||[]).map(b=>`<option value="${b.id}">${b.customers?.name||''} · ${fmt(b.start_date)} ${b.destination||''}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div style="margin:16px 0 8px;font-size:13px;font-weight:500;color:var(--ink-muted)">费用明细</div>
+    ${[['q-guide','导游服务费'],['q-vehicle','车辆费用'],['q-hotel','酒店住宿'],['q-ticket','门票费用'],['q-parking','停车费用'],['q-meal','餐饮费用'],['q-other','其他费用']].map(([id,label])=>`
+      <div class="quote-row"><label>${label}</label><input id="${id}" type="number" value="0" min="0" oninput="calcTotal()"></div>`).join('')}
+    <div class="quote-total"><span>合计</span><span id="q-total">0</span></div>
+    <div class="form-row" style="margin-top:12px">
+      <div class="form-group"><div class="form-label">需付定金</div><input class="form-input" id="q-deposit" type="number" value="0"></div>
+      <div class="form-group"><div class="form-label">状态</div>
+        <select class="form-select" id="q-status">
+          ${['draft','sent','accepted','rejected','expired'].map(s=>`<option value="${s}">${{draft:'草稿',sent:'已发送',accepted:'已接受',rejected:'已拒绝',expired:'已过期'}[s]}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><div class="form-label">备注</div><textarea class="form-textarea" id="q-notes"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveQuote()">保存报价</button>
+    </div>`);
+  calcTotal();
+}
+
+function calcTotal() {
+  const ids = ['q-guide','q-vehicle','q-hotel','q-ticket','q-parking','q-meal','q-other'];
+  const total = ids.reduce((s,id)=>s+(parseFloat(document.getElementById(id)?.value)||0),0);
+  const cur = document.getElementById('q-currency')?.value||'USD';
+  document.getElementById('q-total').textContent = cur+' '+total.toLocaleString();
+}
+
+async function saveQuote() {
+  const payload = {
+    quote_number: document.getElementById('q-num').value,
+    customer_id: document.getElementById('q-customer').value||null,
+    booking_id: document.getElementById('q-booking').value||null,
+    currency: document.getElementById('q-currency').value,
+    guide_fee: parseFloat(document.getElementById('q-guide').value)||0,
+    vehicle_fee: parseFloat(document.getElementById('q-vehicle').value)||0,
+    hotel_fee: parseFloat(document.getElementById('q-hotel').value)||0,
+    ticket_fee: parseFloat(document.getElementById('q-ticket').value)||0,
+    parking_fee: parseFloat(document.getElementById('q-parking').value)||0,
+    meal_fee: parseFloat(document.getElementById('q-meal').value)||0,
+    other_fee: parseFloat(document.getElementById('q-other').value)||0,
+    deposit_required: parseFloat(document.getElementById('q-deposit').value)||0,
+    status: document.getElementById('q-status').value,
+    notes: document.getElementById('q-notes').value,
+  };
+  await sb.from('quotes').insert([payload]);
+  closeModal(); loadQuotes();
+}
+
+async function viewQuote(id) {
+  const { data: q } = await sb.from('quotes').select('*,customers(name),bookings(start_date,destination)').eq('id',id).single();
+  if (!q) return;
+  const items = [['导游费',q.guide_fee],['车辆费',q.vehicle_fee],['住宿费',q.hotel_fee],['门票费',q.ticket_fee],['停车费',q.parking_fee],['餐饮费',q.meal_fee],['其他',q.other_fee]].filter(([,v])=>v>0);
+  openModal(`
+    <span class="modal-close" onclick="closeModal()">×</span>
+    <div class="modal-title">${q.quote_number}</div>
+    <div class="detail-grid" style="margin-bottom:16px">
+      <div class="detail-item"><div class="detail-key">客户</div><div class="detail-val">${q.customers?.name||'—'}</div></div>
+      <div class="detail-item"><div class="detail-key">状态</div><div class="detail-val">${badge(q.status)}</div></div>
+    </div>
+    ${items.map(([l,v])=>`<div class="quote-row"><label>${l}</label><span>${q.currency} ${parseFloat(v).toLocaleString()}</span></div>`).join('')}
+    <div class="quote-total"><span>合计</span><span>${q.currency} ${parseFloat(q.total_amount||0).toLocaleString()}</span></div>
+    <div style="margin-top:12px;font-size:13px;color:var(--ink-muted)">需付定金：${q.currency} ${parseFloat(q.deposit_required||0).toLocaleString()}</div>
+    ${q.notes?`<div style="margin-top:12px;font-size:13px;color:var(--ink-muted)">${q.notes}</div>`:''}
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">关闭</button>
+    </div>`);
+}
+
+// ── PAYMENTS ──
+async function loadPayments() {
+  const { data } = await sb.from('payments').select('*,customers(name),bookings(start_date,destination)').order('created_at',{ascending:false});
+  const el = document.getElementById('payments-table');
+  if (!data?.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">💳</div>暂无付款记录</div>'; return; }
+  el.innerHTML = `<table>
+    <thead><tr><th>客户</th><th>金额</th><th>类型</th><th>方式</th><th>状态</th><th>付款时间</th><th>备注</th></tr></thead>
+    <tbody>${data.map(p=>`
+      <tr>
+        <td>${p.customers?.name||'—'}</td>
+        <td><strong>${p.currency} ${parseFloat(p.amount).toLocaleString()}</strong></td>
+        <td><span style="font-size:12px">${{deposit:'定金',balance:'尾款',full_payment:'全款',refund:'退款'}[p.payment_type]||p.payment_type}</span></td>
+        <td><span style="font-size:12px">${p.payment_method||'—'}</span></td>
+        <td>${badge(p.payment_status)}</td>
+        <td style="color:var(--ink-muted)">${p.paid_at?fmt(p.paid_at):'—'}</td>
+        <td style="font-size:12px;color:var(--ink-muted)">${p.notes||''}</td>
+      </tr>`).join('')}
+    </tbody></table>`;
+}
+
+async function openNewPayment() {
+  const { data: customers } = await sb.from('customers').select('id,name').order('created_at',{ascending:false});
+  openModal(`
+    <span class="modal-close" onclick="closeModal()">×</span>
+    <div class="modal-title">记录付款</div>
+    <div class="form-row">
+      <div class="form-group"><div class="form-label">客户 *</div>
+        <select class="form-select" id="p-customer">
+          <option value="">选择客户</option>
+          ${(customers||[]).map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group"><div class="form-label">付款类型</div>
+        <select class="form-select" id="p-type">
+          ${[['deposit','定金'],['balance','尾款'],['full_payment','全款'],['refund','退款']].map(([v,l])=>`<option value="${v}">${l}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><div class="form-label">金额 *</div><input class="form-input" id="p-amount" type="number" placeholder="0"></div>
+      <div class="form-group"><div class="form-label">币种</div>
+        <select class="form-select" id="p-currency">${['USD','RMB','CAD','MXN'].map(c=>`<option>${c}</option>`).join('')}</select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><div class="form-label">付款方式</div>
+        <select class="form-select" id="p-method">
+          ${['Zelle','Wire','Cash','WeChat Pay','Alipay','Credit Card','Other'].map(m=>`<option>${m}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group"><div class="form-label">付款日期</div><input class="form-input" id="p-date" type="date" value="${new Date().toISOString().split('T')[0]}"></div>
+    </div>
+    <div class="form-group"><div class="form-label">备注</div><textarea class="form-textarea" id="p-notes"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" onclick="savePayment()">保存</button>
+    </div>`);
+}
+
+async function savePayment() {
+  const payload = {
+    customer_id: document.getElementById('p-customer').value||null,
+    amount: parseFloat(document.getElementById('p-amount').value)||0,
+    currency: document.getElementById('p-currency').value,
+    payment_method: document.getElementById('p-method').value,
+    payment_type: document.getElementById('p-type').value,
+    payment_status: 'received',
+    paid_at: document.getElementById('p-date').value,
+    notes: document.getElementById('p-notes').value,
+  };
+  await sb.from('payments').insert([payload]);
+  closeModal(); loadPayments();
+}
+
+// ── ITINERARIES ──
+async function loadItineraries() {
+  const { data } = await sb.from('itineraries').select('*,customers(name)').order('created_at',{ascending:false});
+  const el = document.getElementById('itineraries-table');
+  if (!data?.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">🗺️</div>暂无行程</div>'; return; }
+  el.innerHTML = `<table>
+    <thead><tr><th>行程标题</th><th>客户</th><th>出发</th><th>结束</th><th>区域</th><th>语言</th><th>状态</th><th>操作</th></tr></thead>
+    <tbody>${data.map(i=>`
+      <tr>
+        <td><strong>${i.title}</strong></td>
+        <td>${i.customers?.name||'—'}</td>
+        <td>${fmt(i.start_date)}</td>
+        <td>${fmt(i.end_date)}</td>
+        <td style="font-size:12px">${i.region||'—'}</td>
+        <td><span style="font-size:12px">${{zh:'中文',en:'英文',bilingual:'双语'}[i.language]||i.language}</span></td>
+        <td>${badge(i.status)}</td>
+        <td><button class="btn btn-sm" onclick="viewItinerary('${i.id}')">查看</button></td>
+      </tr>`).join('')}
+    </tbody></table>`;
+}
+
+async function openNewItinerary() {
+  const { data: customers } = await sb.from('customers').select('id,name').order('created_at',{ascending:false});
+  openModal(`
+    <span class="modal-close" onclick="closeModal()">×</span>
+    <div class="modal-title">新建行程</div>
+    <div class="form-group"><div class="form-label">行程标题 *</div><input class="form-input" id="it-title" placeholder="如：洛杉矶6日精华游"></div>
+    <div class="form-row">
+      <div class="form-group"><div class="form-label">客户</div>
+        <select class="form-select" id="it-customer">
+          <option value="">选择客户</option>
+          ${(customers||[]).map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group"><div class="form-label">语言</div>
+        <select class="form-select" id="it-lang">
+          <option value="bilingual">中英双语</option>
+          <option value="zh">中文</option>
+          <option value="en">English</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><div class="form-label">开始日期</div><input class="form-input" id="it-start" type="date"></div>
+      <div class="form-group"><div class="form-label">结束日期</div><input class="form-input" id="it-end" type="date"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><div class="form-label">服务区域</div><input class="form-input" id="it-region" placeholder="如：美国西海岸"></div>
+      <div class="form-group"><div class="form-label">状态</div>
+        <select class="form-select" id="it-status">
+          ${[['draft','草稿'],['sent','已发送'],['confirmed','已确认'],['completed','已完成']].map(([v,l])=>`<option value="${v}">${l}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><div class="form-label">行程概述</div><textarea class="form-textarea" id="it-summary"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveItinerary()">保存行程</button>
+    </div>`);
+}
+
+async function saveItinerary() {
+  const payload = {
+    title: document.getElementById('it-title').value.trim(),
+    customer_id: document.getElementById('it-customer').value||null,
+    language: document.getElementById('it-lang').value,
+    start_date: document.getElementById('it-start').value||null,
+    end_date: document.getElementById('it-end').value||null,
+    region: document.getElementById('it-region').value,
+    status: document.getElementById('it-status').value,
+    summary: document.getElementById('it-summary').value,
+  };
+  if (!payload.title) { alert('请填写行程标题'); return; }
+  await sb.from('itineraries').insert([payload]);
+  closeModal(); loadItineraries();
+}
+
+async function viewItinerary(id) {
+  const { data: it } = await sb.from('itineraries').select('*,customers(name)').eq('id',id).single();
+  const { data: days } = await sb.from('itinerary_days').select('*').eq('itinerary_id',id).order('day_number');
+  openModal(`
+    <span class="modal-close" onclick="closeModal()">×</span>
+    <div class="modal-title">${it.title}</div>
+    <div class="detail-grid" style="margin-bottom:16px">
+      <div class="detail-item"><div class="detail-key">客户</div><div class="detail-val">${it.customers?.name||'—'}</div></div>
+      <div class="detail-item"><div class="detail-key">状态</div><div class="detail-val">${badge(it.status)}</div></div>
+      <div class="detail-item"><div class="detail-key">日期</div><div class="detail-val">${fmtFull(it.start_date)} → ${fmtFull(it.end_date)}</div></div>
+      <div class="detail-item"><div class="detail-key">区域</div><div class="detail-val">${it.region||'—'}</div></div>
+    </div>
+    ${it.summary?`<div style="background:var(--cream);padding:12px;border-radius:4px;font-size:14px;line-height:1.6;margin-bottom:16px">${it.summary}</div>`:''}
+    ${days?.length?`<div style="font-size:13px;font-weight:500;margin-bottom:10px">每日行程（${days.length}天）</div>`+days.map(d=>`
+      <div style="border:1px solid var(--border-soft);border-radius:6px;padding:12px;margin-bottom:8px">
+        <div style="font-weight:500;font-size:13px;margin-bottom:4px">第${d.day_number}天 ${d.city||''} ${fmt(d.date)}</div>
+        <div style="font-size:13px;color:var(--ink-light);line-height:1.6">${d.activities||'暂无安排'}</div>
+        ${d.hotel?`<div style="font-size:12px;color:var(--ink-muted);margin-top:4px">🏨 ${d.hotel}</div>`:''}
+      </div>`).join(''):`<div style="color:var(--ink-muted);font-size:13px">暂无每日行程，可在数据库中添加</div>`}
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">关闭</button>
+    </div>`);
+}
+
+// ── CALENDAR ADMIN ──
+async function loadCalendarAdmin() {
+  const mn = ['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
+  document.getElementById('cal-month-title').textContent = `${calYear}年 ${mn[calMonth-1]} 档期管理`;
+  const startDate = `${calYear}-${String(calMonth).padStart(2,'0')}-01`;
+  const endDate   = `${calYear}-${String(calMonth).padStart(2,'0')}-31`;
+  const { data: slots } = await sb.from('availability_slots').select('*').gte('date',startDate).lte('date',endDate).order('date');
+  const slotMap = {};
+  (slots||[]).forEach(s => { if(!slotMap[s.date]) slotMap[s.date]=[]; slotMap[s.date].push(s); });
+
+  const grid = document.getElementById('cal-admin-grid');
+  grid.innerHTML = '';
+  const today = new Date(); today.setHours(0,0,0,0);
+  const firstDay = new Date(calYear, calMonth-1, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth, 0).getDate();
+
+  for (let i=0;i<firstDay;i++) { const e=document.createElement('div'); e.className='cal-admin-cell empty'; grid.appendChild(e); }
+  for (let d=1;d<=daysInMonth;d++) {
+    const ds = `${calYear}-${String(calMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const date = new Date(calYear, calMonth-1, d);
+    const isPast = date < today;
+    const daySlots = slotMap[ds]||[];
+    let cls = '';
+    if (daySlots.length>0) {
+      const statuses = [...new Set(daySlots.map(s=>s.status))];
+      cls = statuses.includes('available')?'available':statuses.includes('pending')?'pending':statuses.includes('booked')?'booked':'blocked';
+    }
+    const dotColor = {available:'dot-green',pending:'dot-amber',booked:'dot-gray',blocked:'dot-red'}[cls]||'';
+    const el = document.createElement('div');
+    el.className = `cal-admin-cell${isPast?' past':''}${cls?' '+cls:''}`;
+    el.innerHTML = `<div>${d}</div>${cls?`<div class="cal-dot ${dotColor}"></div>`:''}`;
+    if (!isPast) el.onclick = () => openSlotModal(ds, daySlots);
+    grid.appendChild(el);
+  }
+
+  const list = document.getElementById('slots-list');
+  if (slots?.length) {
+    list.innerHTML = `<div style="font-size:13px;font-weight:500;margin-bottom:10px">本月档期列表</div>`+
+      `<table><thead><tr><th>日期</th><th>时段</th><th>状态</th><th>公开备注</th><th>操作</th></tr></thead><tbody>`+
+      slots.map(s=>`<tr>
+        <td>${fmtFull(s.date)}</td>
+        <td>${periodLabel[s.period]||s.period}</td>
+        <td>${badge(s.status)}</td>
+        <td style="font-size:12px;color:var(--ink-muted)">${s.public_note||''}</td>
+        <td><button class="btn btn-sm btn-danger" onclick="deleteSlot('${s.id}')">删除</button></td>
+      </tr>`).join('')+`</tbody></table>`;
+  } else {
+    list.innerHTML = '<div style="color:var(--ink-muted);font-size:13px;padding-bottom:16px">本月暂无档期，点击右上角「+ 添加档期」</div>';
+  }
+}
+
+function openSlotModal(date, existing) {
+  openModal(`
+    <span class="modal-close" onclick="closeModal()">×</span>
+    <div class="modal-title">设置档期 · ${fmtFull(date)}</div>
+    ${existing.length?`<div style="margin-bottom:16px">
+      <div style="font-size:13px;font-weight:500;margin-bottom:8px">现有档期</div>
+      ${existing.map(s=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border-soft)">
+        <span>${periodLabel[s.period]}</span>${badge(s.status)}
+        <button class="btn btn-sm btn-danger" onclick="deleteSlot('${s.id}')">删除</button>
+      </div>`).join('')}
+    </div>`:''}
+    <div style="font-size:13px;font-weight:500;margin-bottom:12px">添加新档期</div>
+    <div class="form-row">
+      <div class="form-group"><div class="form-label">时段</div>
+        <select class="form-select" id="slot-period">
+          <option value="full_day">全天</option>
+          <option value="am">上午</option>
+          <option value="pm">下午</option>
+        </select>
+      </div>
+      <div class="form-group"><div class="form-label">状态</div>
+        <select class="form-select" id="slot-status">
+          <option value="available">可预约</option>
+          <option value="pending">洽询中</option>
+          <option value="booked">已预约</option>
+          <option value="blocked">不开放</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><div class="form-label">公开备注（客户可见）</div><input class="form-input" id="slot-note" placeholder="可选"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveSlot('${date}')">保存</button>
+    </div>`);
+}
+
+function openAddSlot() {
+  const today = new Date().toISOString().split('T')[0];
+  openModal(`
+    <span class="modal-close" onclick="closeModal()">×</span>
+    <div class="modal-title">添加档期</div>
+    <div class="form-group"><div class="form-label">日期 *</div><input class="form-input" id="slot-date" type="date" value="${today}"></div>
+    <div class="form-row">
+      <div class="form-group"><div class="form-label">时段</div>
+        <select class="form-select" id="slot-period"><option value="full_day">全天</option><option value="am">上午</option><option value="pm">下午</option></select>
+      </div>
+      <div class="form-group"><div class="form-label">状态</div>
+        <select class="form-select" id="slot-status"><option value="available">可预约</option><option value="pending">洽询中</option><option value="booked">已预约</option><option value="blocked">不开放</option></select>
+      </div>
+    </div>
+    <div class="form-group"><div class="form-label">公开备注</div><input class="form-input" id="slot-note" placeholder="可选"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveSlot(document.getElementById('slot-date').value)">保存</button>
+    </div>`);
+}
+
+async function saveSlot(date) {
+  if (!date) { alert('请选择日期'); return; }
+  await sb.from('availability_slots').insert([{
+    date, period: document.getElementById('slot-period').value,
+    status: document.getElementById('slot-status').value,
+    public_note: document.getElementById('slot-note').value,
+    is_visible: true
+  }]);
+  closeModal(); loadCalendarAdmin();
+}
+
+async function deleteSlot(id) {
+  if (!confirm('确定删除此档期？')) return;
+  await sb.from('availability_slots').delete().eq('id',id);
+  closeModal(); loadCalendarAdmin();
+}
+
+function calPrev() { calMonth--; if(calMonth<1){calMonth=12;calYear--;} loadCalendarAdmin(); }
+function calNext() { calMonth++; if(calMonth>12){calMonth=1;calYear++;} loadCalendarAdmin(); }
+
+// ── SETTINGS ──
+async function loadSettings() {
+  const { data } = await sb.from('admin_settings').select('*').order('setting_key');
+  const el = document.getElementById('settings-content');
+  if (!data) { el.innerHTML = '加载失败'; return; }
+  const labels = {
+    admin_password:'管理员密码',company_name:'公司名称',guide_name:'导游姓名',
+    contact_email:'联系邮箱',contact_wechat:'微信号',contact_whatsapp:'WhatsApp',
+    default_currency:'默认币种',default_language:'默认语言',service_areas:'服务区域'
+  };
+  el.innerHTML = data.map(s=>`
+    <div class="form-group">
+      <div class="form-label">${labels[s.setting_key]||s.setting_key}</div>
+      <div style="display:flex;gap:8px">
+        <input class="form-input" id="setting-${s.setting_key}" value="${s.setting_value||''}">
+        <button class="btn btn-sm btn-primary" onclick="saveSetting('${s.setting_key}')">保存</button>
+      </div>
+      ${s.description?`<div style="font-size:11px;color:var(--ink-muted);margin-top:4px">${s.description}</div>`:''}
+    </div>`).join('');
+}
+
+async function saveSetting(key) {
+  const value = document.getElementById('setting-'+key).value;
+  await sb.from('admin_settings').update({setting_value:value}).eq('setting_key',key);
+  alert('已保存');
+}
+</script>
+</body>
+</html>
