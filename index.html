@@ -41,7 +41,12 @@ body { font-family: 'Noto Sans SC', sans-serif; background: var(--cream-bg); col
 .hero-content { position: relative; z-index: 1; max-width: 560px; width: 100%; }
 
 .hero-logo-wrap { margin-bottom: 20px; opacity: 0; animation: fadeUp 0.7s 0.1s forwards; }
-.hero-logo-svg { width: 68px; height: 68px; }
+.hero-logo-img { 
+  width: 100px; height: 100px; 
+  object-fit: contain;
+  border-radius: 12px;
+  background: transparent;
+}
 
 .hero-eyebrow { font-size: 12px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--teal); margin-bottom: 14px; opacity: 0; animation: fadeUp 0.7s 0.25s forwards; }
 .hero-title { font-family: 'Noto Serif SC', serif; font-size: clamp(30px, 8vw, 50px); font-weight: 700; line-height: 1.15; color: var(--navy); margin-bottom: 6px; opacity: 0; animation: fadeUp 0.7s 0.35s forwards; }
@@ -154,12 +159,10 @@ footer { background: var(--navy); text-align: center; padding: 30px 20px; font-s
   <div class="hero-line top"></div>
   <div class="hero-content">
     <div class="hero-logo-wrap">
-      <svg class="hero-logo-svg" viewBox="0 0 120 130" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M60 8 L108 28 L108 72 Q108 100 60 122 Q12 100 12 72 L12 28 Z" fill="#3d7d8a" opacity="0.85"/>
-        <path d="M60 20 L63.5 31 L75 31 L66 38 L69 49 L60 43 L51 49 L54 38 L45 31 L56.5 31 Z" fill="#1a2f4a"/>
-        <path d="M55 52 Q50 64 47 76 Q44 88 50 98 Q55 106 60 112" stroke="#f5ede0" stroke-width="4.5" stroke-linecap="round" fill="none"/>
-        <path d="M65 52 Q70 64 73 76 Q76 88 70 98 Q65 106 60 112" stroke="#f5ede0" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.45"/>
-      </svg>
+      <img src="https://raw.githubusercontent.com/clizman/orion-booking/main/25176.JPG" 
+           alt="Orion Pathfinders Logo" 
+           class="hero-logo-img"
+           onerror="this.style.display='none'">
     </div>
     <div class="hero-eyebrow cn-only">定制私家导游 · 美国 · 加拿大 · 墨西哥</div>
     <div class="hero-eyebrow en-only">Private Tour Guide · USA · Canada · Mexico</div>
@@ -205,7 +208,9 @@ footer { background: var(--navy); text-align: center; padding: 30px 20px; font-s
     <p class="section-desc cn-only">Leon 扎根洛杉矶十余年，精通中英双语，深谙华人旅行需求。从顶级名校到国家公园，从城市精华到荒野探索，为您量身打造每一次旅程。</p>
     <p class="section-desc en-only">Leon is based in Los Angeles with over 10 years of experience guiding Chinese families. Fluent in Mandarin and English, specializing in customized VIP experiences.</p>
     <div class="guide-card">
-      <div class="guide-avatar">🧭</div>
+      <div class="guide-avatar" style="background:none;border:none;padding:0;overflow:hidden">
+        <img src="https://raw.githubusercontent.com/clizman/orion-booking/main/man leon.png" alt="Leon" style="width:64px;height:64px;object-fit:cover;object-position:top center;border-radius:50%;border:2.5px solid var(--teal)">
+      </div>
       <div>
         <div class="guide-name">Leon</div>
         <div class="guide-role cn-only">Orion Pathfinders 创始人 · 洛杉矶</div>
@@ -217,6 +222,20 @@ footer { background: var(--navy); text-align: center; padding: 30px 20px; font-s
           <span class="guide-tag en-only">VIP Custom</span>
           <span class="guide-tag">LA Base</span>
         </div>
+      </div>
+    </div>
+
+    <!-- Leon 工作照 -->
+    <div style="margin-top:24px;border-radius:16px;overflow:hidden;position:relative;background:linear-gradient(135deg,var(--teal-pale) 0%,var(--cream-bg) 100%);display:flex;align-items:flex-end;justify-content:center;min-height:260px">
+      <img src="https://raw.githubusercontent.com/clizman/orion-booking/main/man with camera.png"
+           alt="Leon 导游工作照"
+           style="height:255px;object-fit:contain;object-position:bottom center;filter:drop-shadow(0 6px 18px rgba(26,47,74,0.15))"
+           loading="lazy">
+      <div style="position:absolute;bottom:16px;left:0;right:0;text-align:center">
+        <span style="display:inline-block;background:rgba(255,255,255,0.9);backdrop-filter:blur(6px);padding:6px 16px;border-radius:20px;font-size:12px;font-weight:600;color:var(--navy);border:1px solid var(--border)">
+          <span class="cn-only">📷 专业摄影师 · 每段旅程都值得被记录</span>
+          <span class="en-only">📷 Every journey deserves to be captured</span>
+        </span>
       </div>
     </div>
   </div>
