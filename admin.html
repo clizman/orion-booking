@@ -1102,7 +1102,8 @@ async function loadCalendarAdmin() {
   const mn = ['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
   document.getElementById('cal-month-title').textContent = `${calYear}年 ${mn[calMonth-1]} 档期管理`;
   const startDate = `${calYear}-${String(calMonth).padStart(2,'0')}-01`;
-  const endDate   = `${calYear}-${String(calMonth).padStart(2,'0')}-31`;
+  const lastDay   = new Date(calYear, calMonth, 0).getDate(); // 自动获取当月最后一天
+  const endDate   = `${calYear}-${String(calMonth).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`;
   const { data: slots } = await sb.from('availability_slots').select('*').gte('date',startDate).lte('date',endDate).order('date');
   const slotMap = {};
   (slots||[]).forEach(s => { if(!slotMap[s.date]) slotMap[s.date]=[]; slotMap[s.date].push(s); });
