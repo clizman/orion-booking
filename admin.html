@@ -616,6 +616,38 @@ async function viewBooking(id) {
 async function updateBookingStatus(id) {
   const status = document.getElementById('booking-status-sel').value;
   await sb.from('bookings').update({status}).eq('id',id);
+
+  // 如果改为已确认，自动把对应档期改为 booked
+  if (status === 'confirmed') {
+    const { data: b } = await sb.from('bookings').select('start_date,end_date').eq('id',id).single();
+    if (b?.start_date) {
+      const endDate = b.end_date || b.start_date;
+      await sb.from('availability_slots')
+        .delete()
+        .gte('date', b.start_date)
+        .lte('date', endDate)
+        .in('status', ['available','pending']);
+      const start = new Date(b.start_date);
+      const end   = new Date(endDate);
+      const slots = [];
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate()+1)) {
+        slots.push({ date: d.toISOString().split('T')[0], period:'full_day', status:'booked', is_visible:true });
+      }
+      if (slots.length) await sb.from('availability_slots').insert(slots);
+    }
+  }
+  // 如果改为已取消，把档期重新设为 available
+  if (status === 'cancelled') {
+    const { data: b } = await sb.from('bookings').select('start_date,end_date').eq('id',id).single();
+    if (b?.start_date) {
+      const endDate = b.end_date || b.start_date;
+      await sb.from('availability_slots')
+        .update({status:'available'})
+        .gte('date', b.start_date)
+        .lte('date', endDate)
+        .eq('status','booked');
+    }
+  }
   closeModal(); loadBookings(); loadDashboard();
 }
 
@@ -949,8 +981,36 @@ async function saveItinerary() {
     summary: document.getElementById('it-summary').value,
   };
   if (!payload.title) { alert('请填写行程标题'); return; }
-  await sb.from('itineraries').insert([payload]);
+  const { data: itData, error } = await sb.from('itineraries').insert([payload]).select('id').single();
+  if (error) { alert('保存失败: ' + error.message); return; }
+
+  // 自动把行程日期写入档期表，标记为已预约
+  if (payload.start_date && payload.end_date) {
+    const start = new Date(payload.start_date);
+    const end   = new Date(payload.end_date);
+    const slotsToInsert = [];
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate()+1)) {
+      const dateStr = d.toISOString().split('T')[0];
+      slotsToInsert.push({
+        date: dateStr,
+        period: 'full_day',
+        status: 'booked',
+        private_note: payload.title,
+        is_visible: true
+      });
+    }
+    if (slotsToInsert.length > 0) {
+      // 先删除这段日期内的 available/pending 档期，再插入 booked
+      await sb.from('availability_slots')
+        .delete()
+        .gte('date', payload.start_date)
+        .lte('date', payload.end_date)
+        .in('status', ['available', 'pending']);
+      await sb.from('availability_slots').insert(slotsToInsert);
+    }
+  }
   closeModal(); loadItineraries();
+  alert('行程已保存，档期已自动更新为已预约 ✓');
 }
 
 async function viewItinerary(id) {
