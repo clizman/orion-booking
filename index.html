@@ -664,7 +664,8 @@ function scrollToCalendar() {
 // ── CALENDAR ──
 async function loadSlots(year, month) {
   const startDate = `${year}-${String(month).padStart(2,'0')}-01`;
-  const endDate   = `${year}-${String(month).padStart(2,'0')}-31`;
+  const lastDay = new Date(year, month, 0).getDate();
+  const endDate   = `${year}-${String(month).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`;
   const { data, error } = await sb
     .from('availability_slots')
     .select('*')
@@ -796,7 +797,7 @@ async function submitBooking(e) {
     let customerId = null;
     const { data: custData, error: custErr } = await sb
       .from('customers')
-      .insert([{ name, wechat, phone, email, country: region, source: '官网', language: lang }])
+      .insert([{ name, wechat, phone, email, country: region, source: '官网' }])
       .select('id')
       .single();
     if (custErr) throw custErr;
@@ -816,8 +817,7 @@ async function submitBooking(e) {
       start_date: selectedDate,
       guest_count: guests,
       message,
-      status: 'new',
-      language: lang
+      status: 'new'
     }]);
     if (bookErr) throw bookErr;
 
