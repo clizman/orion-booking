@@ -1119,10 +1119,16 @@ async function loadCalendarAdmin() {
     const date = new Date(calYear, calMonth-1, d);
     const isPast = date < today;
     const daySlots = slotMap[ds]||[];
-    let cls = '';
-    if (daySlots.length>0) {
-      const statuses = [...new Set(daySlots.map(s=>s.status))];
-      cls = statuses.includes('available')?'available':statuses.includes('pending')?'pending':statuses.includes('booked')?'booked':'blocked';
+    // 默认：未来日期可预约，只有数据库有记录才覆盖
+    let cls = isPast ? '' : 'available';
+    if (daySlots.length > 0) {
+      const hasBooked  = daySlots.some(s=>s.status==='booked');
+      const hasBlocked = daySlots.some(s=>s.status==='blocked');
+      const hasPending = daySlots.some(s=>s.status==='pending');
+      if (hasBooked)       cls = 'booked';
+      else if (hasBlocked) cls = 'blocked';
+      else if (hasPending) cls = 'pending';
+      else                 cls = 'available';
     }
     const dotColor = {available:'dot-green',pending:'dot-amber',booked:'dot-gray',blocked:'dot-red'}[cls]||'';
     const el = document.createElement('div');
