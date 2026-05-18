@@ -471,8 +471,8 @@ let calYear, calMonth;
 const now = new Date();
 
 // ── UTILS ──
-const fmt = d => d ? new Date(d).toLocaleDateString('zh-CN',{month:'short',day:'numeric'}) : '—';
-const fmtFull = d => d ? new Date(d).toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric'}) : '—';
+const fmt = d => { if(!d) return '—'; const [y,mo,dy] = d.split('-').map(Number); return new Date(y,mo-1,dy).toLocaleDateString('zh-CN',{timeZone:'America/Los_Angeles',month:'short',day:'numeric'}); };
+const fmtFull = d => { if(!d) return '—'; const [y,mo,dy] = d.split('-').map(Number); return new Date(y,mo-1,dy).toLocaleDateString('zh-CN',{timeZone:'America/Los_Angeles',year:'numeric',month:'long',day:'numeric'}); };
 const statusLabel = {new:'新申请',pending:'洽询中',quoted:'已报价',confirmed:'已确认',completed:'已完成',cancelled:'已取消'};
 const periodLabel = {am:'上午',pm:'下午',full_day:'全天'};
 
@@ -506,7 +506,7 @@ function logout() {
 // ── INIT ──
 function initApp() {
   const d = new Date();
-  document.getElementById('today-date').textContent = d.toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
+  document.getElementById('today-date').textContent = d.toLocaleDateString('zh-CN',{timeZone:'America/Los_Angeles',year:'numeric',month:'long',day:'numeric',weekday:'short'});
   calYear = d.getFullYear(); calMonth = d.getMonth()+1;
   loadDashboard();
 }
@@ -630,7 +630,7 @@ async function updateBookingStatus(id) {
       const start = new Date(b.start_date);
       const end   = new Date(endDate);
       const slots = [];
-      for (let d = new Date(start); d <= end; d.setDate(d.getDate()+1)) {
+      for (let d = new Date(b.start_date + 'T12:00:00'); d <= new Date(endDate + 'T12:00:00'); d.setDate(d.getDate()+1)) {
         slots.push({ date: d.toISOString().split('T')[0], period:'full_day', status:'booked', is_visible:true });
       }
       if (slots.length) await sb.from('availability_slots').insert(slots);
@@ -981,7 +981,7 @@ async function syncSlotsForItinerary(startDate, endDate, title) {
     .gte('date', startDate).lte('date', end);
   // 重新插入 booked 档期
   const slots = [];
-  for (let d = new Date(startDate); d <= new Date(end); d.setDate(d.getDate()+1)) {
+  for (let d = new Date(startDate + 'T12:00:00'); d <= new Date(end + 'T12:00:00'); d.setDate(d.getDate()+1)) {
     slots.push({ date: d.toISOString().split('T')[0], period:'full_day', status:'booked', private_note: title, is_visible:true });
   }
   if (slots.length) await sb.from('availability_slots').insert(slots);
