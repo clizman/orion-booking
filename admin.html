@@ -924,7 +924,11 @@ async function loadItineraries() {
         <td style="font-size:12px">${i.region||'—'}</td>
         <td><span style="font-size:12px">${{zh:'中文',en:'英文',bilingual:'双语'}[i.language]||i.language}</span></td>
         <td>${badge(i.status)}</td>
-        <td><button class="btn btn-sm" onclick="viewItinerary('${i.id}')">查看</button></td>
+        <td style="display:flex;gap:4px">
+          <button class="btn btn-sm" onclick="viewItinerary('${i.id}')">查看</button>
+          <button class="btn btn-sm" onclick="editItinerary('${i.id}')">编辑</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteItinerary('${i.id}','${i.start_date}','${i.end_date||i.start_date}')">删除</button>
+        </td>
       </tr>`).join('')}
     </tbody></table>`;
 }
@@ -965,11 +969,32 @@ async function openNewItinerary() {
     <div class="form-group"><div class="form-label">行程概述</div><textarea class="form-textarea" id="it-summary"></textarea></div>
     <div class="modal-footer">
       <button class="btn" onclick="closeModal()">取消</button>
-      <button class="btn btn-primary" onclick="saveItinerary()">保存行程</button>
+      <button class="btn btn-primary" onclick="saveItinerary(null)">保存行程</button>
     </div>`);
 }
 
-async function saveItinerary() {
+async function syncSlotsForItinerary(startDate, endDate, title) {
+  if (!startDate) return;
+  const end = endDate || startDate;
+  // 先清除该日期范围内所有档期
+  await sb.from('availability_slots').delete()
+    .gte('date', startDate).lte('date', end);
+  // 重新插入 booked 档期
+  const slots = [];
+  for (let d = new Date(startDate); d <= new Date(end); d.setDate(d.getDate()+1)) {
+    slots.push({ date: d.toISOString().split('T')[0], period:'full_day', status:'booked', private_note: title, is_visible:true });
+  }
+  if (slots.length) await sb.from('availability_slots').insert(slots);
+}
+
+async function clearSlotsForItinerary(startDate, endDate) {
+  if (!startDate) return;
+  const end = endDate || startDate;
+  await sb.from('availability_slots').delete()
+    .gte('date', startDate).lte('date', end).eq('status','booked');
+}
+
+async function saveItinerary(editId) {
   const payload = {
     title: document.getElementById('it-title').value.trim(),
     customer_id: document.getElementById('it-customer').value||null,
@@ -981,36 +1006,71 @@ async function saveItinerary() {
     summary: document.getElementById('it-summary').value,
   };
   if (!payload.title) { alert('请填写行程标题'); return; }
-  const { data: itData, error } = await sb.from('itineraries').insert([payload]).select('id').single();
-  if (error) { alert('保存失败: ' + error.message); return; }
-
-  // 自动把行程日期写入档期表，标记为已预约
-  if (payload.start_date && payload.end_date) {
-    const start = new Date(payload.start_date);
-    const end   = new Date(payload.end_date);
-    const slotsToInsert = [];
-    for (let d = new Date(start); d <= end; d.setDate(d.getDate()+1)) {
-      const dateStr = d.toISOString().split('T')[0];
-      slotsToInsert.push({
-        date: dateStr,
-        period: 'full_day',
-        status: 'booked',
-        private_note: payload.title,
-        is_visible: true
-      });
-    }
-    if (slotsToInsert.length > 0) {
-      // 先删除这段日期内的 available/pending 档期，再插入 booked
-      await sb.from('availability_slots')
-        .delete()
-        .gte('date', payload.start_date)
-        .lte('date', payload.end_date)
-        .in('status', ['available', 'pending']);
-      await sb.from('availability_slots').insert(slotsToInsert);
-    }
+  let error;
+  if (editId) {
+    // 编辑模式：先清除旧档期
+    const oldStart = document.getElementById('it-old-start')?.value;
+    const oldEnd   = document.getElementById('it-old-end')?.value;
+    if (oldStart) await clearSlotsForItinerary(oldStart, oldEnd);
+    ({ error } = await sb.from('itineraries').update(payload).eq('id', editId));
+  } else {
+    ({ error } = await sb.from('itineraries').insert([payload]));
   }
+  if (error) { alert('保存失败: ' + error.message); return; }
+  // 同步新档期
+  await syncSlotsForItinerary(payload.start_date, payload.end_date, payload.title);
   closeModal(); loadItineraries();
-  alert('行程已保存，档期已自动更新为已预约 ✓');
+}
+
+async function editItinerary(id) {
+  const { data: i } = await sb.from('itineraries').select('*').eq('id',id).single();
+  const { data: customers } = await sb.from('customers').select('id,name').order('created_at',{ascending:false});
+  openModal(`
+    <span class="modal-close" onclick="closeModal()">×</span>
+    <div class="modal-title">编辑行程</div>
+    <input type="hidden" id="it-old-start" value="${i.start_date||''}">
+    <input type="hidden" id="it-old-end" value="${i.end_date||''}">
+    <div class="form-group"><div class="form-label">行程标题 *</div><input class="form-input" id="it-title" value="${i.title}"></div>
+    <div class="form-row">
+      <div class="form-group"><div class="form-label">客户</div>
+        <select class="form-select" id="it-customer">
+          <option value="">选择客户</option>
+          ${(customers||[]).map(c=>`<option value="${c.id}"${i.customer_id===c.id?' selected':''}>${c.name}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group"><div class="form-label">语言</div>
+        <select class="form-select" id="it-lang">
+          <option value="bilingual"${i.language==='bilingual'?' selected':''}>中英双语</option>
+          <option value="zh"${i.language==='zh'?' selected':''}>中文</option>
+          <option value="en"${i.language==='en'?' selected':''}>English</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><div class="form-label">开始日期</div><input class="form-input" id="it-start" type="date" value="${i.start_date||''}"></div>
+      <div class="form-group"><div class="form-label">结束日期</div><input class="form-input" id="it-end" type="date" value="${i.end_date||''}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><div class="form-label">服务区域</div><input class="form-input" id="it-region" value="${i.region||''}"></div>
+      <div class="form-group"><div class="form-label">状态</div>
+        <select class="form-select" id="it-status">
+          ${[['draft','草稿'],['sent','已发送'],['confirmed','已确认'],['completed','已完成']].map(([v,l])=>`<option value="${v}"${i.status===v?' selected':''}>${l}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><div class="form-label">行程概述</div><textarea class="form-textarea" id="it-summary">${i.summary||''}</textarea></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveItinerary('${id}')">保存修改</button>
+    </div>`);
+}
+
+async function deleteItinerary(id, startDate, endDate) {
+  if (!confirm('确定删除此行程？对应档期也会一并清除。')) return;
+  await clearSlotsForItinerary(startDate, endDate);
+  await sb.from('itinerary_days').delete().eq('itinerary_id', id);
+  await sb.from('itineraries').delete().eq('id', id);
+  loadItineraries();
 }
 
 async function viewItinerary(id) {
