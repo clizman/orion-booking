@@ -718,15 +718,17 @@ function renderCalendar() {
     const isToday = date.getTime() === today.getTime();
     const isSelected = dateStr === selectedDate;
 
-    let statusClass = 'blocked';
+    // 默认逻辑：未来日期默认可预约，只有数据库中有特殊标注才改变状态
+    let statusClass = isPast ? 'past' : 'available'; // 默认：过去=灰色，未来=绿色可预约
     if (!isPast && slots.length > 0) {
-      const hasAvail = slots.some(s => s.status === 'available');
+      const hasBooked  = slots.some(s => s.status === 'booked');
+      const hasBlocked = slots.some(s => s.status === 'blocked');
       const hasPending = slots.some(s => s.status === 'pending');
-      if (hasAvail) statusClass = 'available';
-      else if (hasPending) statusClass = 'pending';
-      else statusClass = 'booked';
-    } else if (isPast) {
-      statusClass = 'past';
+      const hasAvail   = slots.some(s => s.status === 'available');
+      if (hasBooked)        statusClass = 'booked';    // 已被预约
+      else if (hasBlocked)  statusClass = 'blocked';   // 不开放
+      else if (hasPending)  statusClass = 'pending';   // 洽询中
+      else if (hasAvail)    statusClass = 'available'; // 明确标注可预约
     }
 
     const el = document.createElement('div');
