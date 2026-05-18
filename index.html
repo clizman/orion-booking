@@ -2,388 +2,148 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Orion Pathfinders | 定制导游预约</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Noto+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root {
-  --ink: #1a1714;
-  --ink-light: #4a453f;
-  --ink-muted: #8c8278;
-  --gold: #b8956a;
-  --gold-light: #d4b896;
-  --gold-pale: #f5ede0;
-  --cream: #faf7f2;
+  --navy: #1a2f4a;
+  --teal: #3d7d8a;
+  --teal-light: #5a9daa;
+  --teal-pale: #e8f4f6;
+  --cream: #f5ede0;
+  --cream-bg: #faf7f2;
   --white: #ffffff;
-  --border: rgba(184,149,106,0.25);
-  --border-soft: rgba(26,23,20,0.08);
-  --red-status: #c0392b;
-  --green-status: #27ae60;
-  --amber-status: #e67e22;
+  --text-dark: #1a2f4a;
+  --text-mid: #3d5a6e;
+  --text-light: #6b8a9a;
+  --border: rgba(61,125,138,0.2);
+  --border-soft: rgba(26,47,74,0.08);
+  --green: #27ae60; --green-bg: #eaf7f0;
+  --amber: #e67e22; --amber-bg: #fef4eb;
+  --gray: #95a5a6;  --gray-bg: #f4f6f7;
 }
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html { font-size: 16px; }
+body { font-family: 'Noto Sans SC', sans-serif; background: var(--cream-bg); color: var(--text-dark); min-height: 100vh; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+.lang-bar { position: fixed; top: 0; right: 0; z-index: 200; padding: 14px 16px; display: flex; gap: 6px; }
+.lang-btn { font-size: 14px; font-weight: 500; padding: 6px 16px; border-radius: 20px; border: 1.5px solid var(--border); background: var(--white); color: var(--text-mid); cursor: pointer; transition: all 0.2s; min-height: 36px; box-shadow: 0 1px 6px rgba(26,47,74,0.1); }
+.lang-btn.active { background: var(--teal); color: var(--white); border-color: var(--teal); }
 
-body {
-  font-family: 'Noto Sans SC', sans-serif;
-  background: var(--cream);
-  color: var(--ink);
-  min-height: 100vh;
-  overflow-x: hidden;
-}
+.hero { background: var(--cream-bg); min-height: 100svh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 80px 24px 48px; position: relative; overflow: hidden; border-bottom: 3px solid var(--teal); }
+.hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 70% 50% at 50% 20%, rgba(61,125,138,0.08) 0%, transparent 70%); }
+.hero-line { position: absolute; left: 50%; transform: translateX(-50%); width: 1px; }
+.hero-line.top { top: 0; height: 60px; background: linear-gradient(to bottom, transparent, rgba(61,125,138,0.3)); }
+.hero-line.bottom { bottom: 0; height: 60px; background: linear-gradient(to top, transparent, rgba(61,125,138,0.3)); }
+.hero-content { position: relative; z-index: 1; max-width: 560px; width: 100%; }
 
-/* ── LANG TOGGLE ── */
-.lang-bar {
-  position: fixed; top: 0; right: 0; z-index: 100;
-  padding: 12px 24px;
-  display: flex; gap: 6px; align-items: center;
-}
-.lang-btn {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 13px; letter-spacing: 0.05em;
-  padding: 4px 12px; border-radius: 20px;
-  border: 1px solid var(--border);
-  background: transparent; color: var(--ink-light);
-  cursor: pointer; transition: all 0.2s;
-}
-.lang-btn.active {
-  background: var(--gold); color: var(--white); border-color: var(--gold);
-}
+.hero-logo-wrap { margin-bottom: 20px; opacity: 0; animation: fadeUp 0.7s 0.1s forwards; }
+.hero-logo-svg { width: 68px; height: 68px; }
 
-/* ── HERO ── */
-.hero {
-  min-height: 100vh;
-  display: flex; flex-direction: column;
-  justify-content: center; align-items: center;
-  text-align: center;
-  padding: 80px 24px 60px;
-  position: relative;
-  background: var(--ink);
-  overflow: hidden;
-}
-.hero::before {
-  content: '';
-  position: absolute; inset: 0;
-  background: radial-gradient(ellipse 70% 60% at 50% 40%, #2d2520 0%, #1a1714 100%);
-}
-.hero-ornament {
-  position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-  width: 1px; height: 80px;
-  background: linear-gradient(to bottom, transparent, var(--gold));
-}
-.hero-ornament-bottom {
-  position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
-  width: 1px; height: 80px;
-  background: linear-gradient(to top, transparent, var(--gold));
-}
-.hero-content { position: relative; z-index: 1; max-width: 680px; }
-.hero-eyebrow {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 13px; letter-spacing: 0.3em; text-transform: uppercase;
-  color: var(--gold); margin-bottom: 28px;
-  opacity: 0; animation: fadeUp 0.8s 0.2s forwards;
-}
-.hero-title {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: clamp(42px, 8vw, 78px);
-  font-weight: 300; line-height: 1.1;
-  color: var(--cream); letter-spacing: -0.01em;
-  margin-bottom: 8px;
-  opacity: 0; animation: fadeUp 0.8s 0.35s forwards;
-}
-.hero-title-cn {
-  font-family: 'Noto Serif SC', serif;
-  font-size: clamp(20px, 4vw, 32px);
-  font-weight: 300; color: var(--gold-light);
-  margin-bottom: 32px; letter-spacing: 0.15em;
-  opacity: 0; animation: fadeUp 0.8s 0.5s forwards;
-}
-.hero-desc {
-  font-size: 15px; line-height: 1.8;
-  color: rgba(250,247,242,0.65);
-  max-width: 480px; margin: 0 auto 40px;
-  opacity: 0; animation: fadeUp 0.8s 0.65s forwards;
-}
-.hero-cta {
-  display: inline-flex; align-items: center; gap: 10px;
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 16px; letter-spacing: 0.08em;
-  color: var(--ink);
-  background: var(--gold);
-  padding: 14px 36px; border-radius: 2px;
-  border: none; cursor: pointer;
-  transition: all 0.25s;
-  opacity: 0; animation: fadeUp 0.8s 0.8s forwards;
-}
-.hero-cta:hover { background: var(--gold-light); transform: translateY(-2px); }
-.hero-cta .arrow { font-size: 20px; transition: transform 0.2s; }
-.hero-cta:hover .arrow { transform: translateX(4px); }
+.hero-eyebrow { font-size: 12px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--teal); margin-bottom: 14px; opacity: 0; animation: fadeUp 0.7s 0.25s forwards; }
+.hero-title { font-family: 'Noto Serif SC', serif; font-size: clamp(30px, 8vw, 50px); font-weight: 700; line-height: 1.15; color: var(--navy); margin-bottom: 6px; opacity: 0; animation: fadeUp 0.7s 0.35s forwards; }
+.hero-subtitle { font-size: clamp(14px, 3.5vw, 18px); color: var(--teal); margin-bottom: 18px; letter-spacing: 0.12em; opacity: 0; animation: fadeUp 0.7s 0.45s forwards; }
+.hero-desc { font-size: 15px; line-height: 1.8; color: var(--text-mid); margin-bottom: 28px; opacity: 0; animation: fadeUp 0.7s 0.55s forwards; }
+.hero-cta { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; max-width: 320px; margin: 0 auto; background: var(--teal); color: var(--white); font-size: 17px; font-weight: 600; padding: 16px 24px; border-radius: 10px; border: none; cursor: pointer; transition: all 0.2s; min-height: 54px; letter-spacing: 0.03em; opacity: 0; animation: fadeUp 0.7s 0.65s forwards; }
+.hero-cta:active { background: var(--teal-light); }
 
-.hero-stats {
-  display: flex; gap: 48px; justify-content: center; margin-top: 56px;
-  opacity: 0; animation: fadeUp 0.8s 1s forwards;
-}
-.hero-stat { text-align: center; }
-.hero-stat-num {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 32px; font-weight: 300; color: var(--gold);
-}
-.hero-stat-label { font-size: 12px; color: rgba(250,247,242,0.5); margin-top: 4px; letter-spacing: 0.05em; }
+.hero-stats { display: flex; gap: 0; margin-top: 36px; border-top: 1px solid var(--border); padding-top: 24px; opacity: 0; animation: fadeUp 0.7s 0.75s forwards; }
+.hero-stat { flex: 1; text-align: center; padding: 0 8px; }
+.hero-stat + .hero-stat { border-left: 1px solid var(--border); }
+.hero-stat-num { font-family: 'Noto Serif SC', serif; font-size: 26px; font-weight: 700; color: var(--navy); line-height: 1; }
+.hero-stat-label { font-size: 11px; color: var(--text-light); margin-top: 5px; }
 
-/* ── SECTION ── */
-.section { padding: 80px 24px; max-width: 900px; margin: 0 auto; }
-.section-label {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 12px; letter-spacing: 0.3em; text-transform: uppercase;
-  color: var(--gold); margin-bottom: 16px;
-}
-.section-title {
-  font-family: 'Noto Serif SC', serif;
-  font-size: clamp(24px, 4vw, 36px); font-weight: 300;
-  line-height: 1.3; margin-bottom: 12px;
-}
-.section-sub { font-size: 15px; color: var(--ink-muted); line-height: 1.7; }
-.divider {
-  width: 40px; height: 1px; background: var(--gold);
-  margin: 24px 0;
-}
+.about-section { background: var(--white); padding: 44px 20px; border-bottom: 1px solid var(--border-soft); }
+.about-inner { max-width: 600px; margin: 0 auto; }
+.section-badge { display: inline-block; background: var(--teal-pale); color: var(--teal); font-size: 12px; font-weight: 600; letter-spacing: 0.1em; padding: 4px 12px; border-radius: 20px; margin-bottom: 14px; text-transform: uppercase; }
+.section-title { font-family: 'Noto Serif SC', serif; font-size: clamp(20px, 5vw, 28px); font-weight: 700; line-height: 1.3; color: var(--navy); margin-bottom: 8px; }
+.section-divider { width: 36px; height: 3px; background: var(--teal); border-radius: 2px; margin: 10px 0 14px; }
+.section-desc { font-size: 15px; line-height: 1.8; color: var(--text-mid); }
 
-/* ── SERVICES ── */
-.services-grid {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1px; background: var(--border); margin: 48px 0;
-  border: 1px solid var(--border);
-}
-.service-card {
-  background: var(--white); padding: 32px 28px;
-  transition: background 0.2s;
-}
-.service-card:hover { background: var(--gold-pale); }
-.service-icon { font-size: 28px; margin-bottom: 16px; }
-.service-name {
-  font-family: 'Noto Serif SC', serif;
-  font-size: 16px; font-weight: 400; margin-bottom: 8px;
-}
-.service-desc { font-size: 13px; color: var(--ink-muted); line-height: 1.6; }
+.guide-card { display: flex; align-items: center; gap: 14px; background: var(--cream-bg); border: 1.5px solid var(--border); border-radius: 12px; padding: 14px; margin-top: 20px; }
+.guide-avatar { width: 60px; height: 60px; border-radius: 50%; background: var(--teal-pale); border: 2px solid var(--teal); display: flex; align-items: center; justify-content: center; font-size: 26px; flex-shrink: 0; }
+.guide-name { font-size: 17px; font-weight: 700; color: var(--navy); }
+.guide-role { font-size: 13px; color: var(--text-light); margin-top: 2px; }
+.guide-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 7px; }
+.guide-tag { font-size: 11px; color: var(--teal); background: var(--teal-pale); padding: 3px 9px; border-radius: 10px; font-weight: 500; }
 
-/* ── CALENDAR SECTION ── */
-.calendar-section {
-  background: var(--white);
-  border-top: 1px solid var(--border-soft);
-  border-bottom: 1px solid var(--border-soft);
-  padding: 80px 24px;
-}
-.calendar-inner { max-width: 900px; margin: 0 auto; }
+.services-section { padding: 36px 16px; max-width: 600px; margin: 0 auto; }
+.service-list { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
+.service-item { display: flex; align-items: center; gap: 14px; background: var(--white); border: 1.5px solid var(--border-soft); border-radius: 12px; padding: 15px 14px; transition: border-color 0.2s; }
+.service-item:active { border-color: var(--teal); background: var(--teal-pale); }
+.service-emoji { font-size: 30px; flex-shrink: 0; width: 40px; text-align: center; }
+.service-text { flex: 1; }
+.service-name { font-size: 16px; font-weight: 600; color: var(--navy); margin-bottom: 2px; }
+.service-desc { font-size: 13px; color: var(--text-light); line-height: 1.5; }
+.service-arrow { color: var(--teal); font-size: 20px; flex-shrink: 0; }
 
-.calendar-nav {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 32px;
-}
-.calendar-nav-btn {
-  width: 36px; height: 36px; border-radius: 50%;
-  border: 1px solid var(--border);
-  background: transparent; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 16px; color: var(--ink-light);
-  transition: all 0.2s;
-}
-.calendar-nav-btn:hover { background: var(--gold-pale); border-color: var(--gold); }
-.calendar-month-title {
-  font-family: 'Noto Serif SC', serif;
-  font-size: 20px; font-weight: 300; letter-spacing: 0.05em;
-}
-
-.calendar-legend {
-  display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 20px;
-}
-.legend-item { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--ink-muted); }
-.legend-dot { width: 10px; height: 10px; border-radius: 50%; }
-.legend-dot.available { background: var(--green-status); }
-.legend-dot.pending { background: var(--amber-status); }
-.legend-dot.booked { background: #bdc3c7; }
-.legend-dot.blocked { background: #ecf0f1; border: 1px solid #bdc3c7; }
-
-.calendar-grid-header {
-  display: grid; grid-template-columns: repeat(7, 1fr);
-  gap: 4px; margin-bottom: 8px;
-  text-align: center;
-}
-.cal-weekday { font-size: 11px; color: var(--ink-muted); letter-spacing: 0.08em; padding: 6px 0; }
-
-.calendar-grid {
-  display: grid; grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
-}
-.cal-day {
-  aspect-ratio: 1; border-radius: 6px;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  font-size: 14px; position: relative;
-  transition: all 0.15s;
-  border: 1.5px solid transparent;
-  cursor: default;
-}
+.calendar-section { background: var(--white); border-top: 3px solid var(--teal); padding: 36px 16px; }
+.calendar-inner { max-width: 600px; margin: 0 auto; }
+.calendar-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+.cal-nav-btn { width: 44px; height: 44px; border-radius: 50%; border: 1.5px solid var(--border); background: var(--white); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 22px; color: var(--navy); transition: all 0.15s; }
+.cal-nav-btn:active { background: var(--teal-pale); border-color: var(--teal); }
+.cal-month-title { font-family: 'Noto Serif SC', serif; font-size: 20px; font-weight: 700; color: var(--navy); }
+.cal-legend { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
+.cal-legend-item { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; color: var(--text-mid); }
+.cal-legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+.cal-weekdays { display: grid; grid-template-columns: repeat(7,1fr); gap: 3px; margin-bottom: 4px; }
+.cal-weekday { text-align: center; font-size: 13px; font-weight: 600; color: var(--text-light); padding: 5px 0; }
+.cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 3px; }
+.cal-day { aspect-ratio: 1; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 15px; font-weight: 500; border: 1.5px solid transparent; cursor: default; user-select: none; transition: all 0.12s; }
 .cal-day.empty { background: transparent; }
-.cal-day.past { color: #ccc; background: transparent; }
-.cal-day.available {
-  background: #f0faf5; color: var(--ink);
-  cursor: pointer; border-color: rgba(39,174,96,0.2);
-}
-.cal-day.available:hover {
-  background: #d5f5e3; border-color: var(--green-status);
-  transform: scale(1.05);
-}
-.cal-day.available.selected {
-  background: var(--green-status); color: var(--white);
-  border-color: var(--green-status);
-}
-.cal-day.pending { background: #fef9f0; color: var(--ink); border-color: rgba(230,126,34,0.2); }
-.cal-day.booked { background: #f8f9fa; color: #bdc3c7; }
-.cal-day.blocked { background: #f8f9fa; color: #ddd; }
-.cal-day.today { font-weight: 500; }
-.cal-day-num { font-size: 14px; }
-.cal-day-dot {
-  width: 4px; height: 4px; border-radius: 50%;
-  margin-top: 2px;
-}
-.cal-day.available .cal-day-dot { background: var(--green-status); }
-.cal-day.pending .cal-day-dot { background: var(--amber-status); }
+.cal-day.past { color: #c5cfd4; }
+.cal-day.available { background: var(--green-bg); color: var(--navy); cursor: pointer; border-color: rgba(39,174,96,0.22); font-weight: 700; }
+.cal-day.available:active, .cal-day.available.selected { background: var(--green); color: var(--white); border-color: var(--green); }
+.cal-day.pending { background: var(--amber-bg); color: var(--navy); border-color: rgba(230,126,34,0.22); }
+.cal-day.booked { background: var(--gray-bg); color: #b8c4c8; }
+.cal-day.today { outline: 2px solid var(--teal); outline-offset: 1px; }
+.cal-day-num { font-size: 15px; line-height: 1; }
+.cal-day-dot { width: 4px; height: 4px; border-radius: 50%; margin-top: 2px; }
+.cal-day.available .cal-day-dot { background: var(--green); }
+.cal-day.pending .cal-day-dot { background: var(--amber); }
 
-.calendar-loading {
-  text-align: center; padding: 60px;
-  font-size: 14px; color: var(--ink-muted);
-}
+.booking-section { padding: 32px 16px 48px; max-width: 600px; margin: 0 auto; }
+.no-date-notice { text-align: center; padding: 28px 16px; background: var(--white); border-radius: 12px; border: 1.5px dashed var(--border); }
+.no-date-notice p { font-size: 15px; color: var(--text-light); }
+.selected-date-banner { display: flex; align-items: center; gap: 12px; background: var(--teal-pale); border: 1.5px solid var(--teal); border-radius: 10px; padding: 13px 15px; margin-bottom: 20px; }
+.selected-date-text { font-size: 15px; color: var(--text-dark); }
+.selected-date-text strong { color: var(--teal); font-weight: 700; }
+.booking-form-card { background: var(--white); border-radius: 14px; border: 1px solid var(--border-soft); padding: 22px 18px; box-shadow: 0 2px 16px rgba(26,47,74,0.06); }
+.form-group { margin-bottom: 16px; }
+.form-label { display: block; font-size: 13px; font-weight: 600; color: var(--text-mid); margin-bottom: 6px; }
+.form-label .req { color: var(--teal); }
+.form-input, .form-select, .form-textarea { width: 100%; padding: 13px 14px; border: 1.5px solid var(--border-soft); border-radius: 8px; background: var(--cream-bg); font-family: 'Noto Sans SC', sans-serif; font-size: 16px; color: var(--text-dark); transition: border-color 0.2s; outline: none; min-height: 48px; -webkit-appearance: none; }
+.form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--teal); background: var(--white); }
+.form-textarea { resize: vertical; min-height: 96px; line-height: 1.6; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.submit-btn { width: 100%; padding: 16px; background: var(--navy); color: var(--white); border: none; border-radius: 10px; font-family: 'Noto Serif SC', serif; font-size: 18px; font-weight: 700; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 6px; min-height: 56px; letter-spacing: 0.04em; }
+.submit-btn:active { background: var(--teal); }
+.submit-btn:disabled { background: #b0bec5; cursor: not-allowed; }
+.submit-btn .spinner { width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.6s linear infinite; }
+.form-error { color: #e74c3c; font-size: 14px; text-align: center; margin-top: 10px; min-height: 18px; }
 
-/* ── BOOKING FORM ── */
-.booking-section { padding: 80px 24px; max-width: 680px; margin: 0 auto; }
-.booking-form-card {
-  background: var(--white);
-  border: 1px solid var(--border-soft);
-  border-radius: 4px;
-  padding: 48px;
-}
-.selected-date-banner {
-  display: flex; align-items: center; gap: 12px;
-  background: var(--gold-pale);
-  border: 1px solid var(--border);
-  border-radius: 4px; padding: 14px 18px;
-  margin-bottom: 32px;
-}
-.selected-date-banner .date-icon { font-size: 20px; }
-.selected-date-text { font-size: 14px; }
-.selected-date-text strong { color: var(--gold); }
+.success-card { text-align: center; padding: 44px 20px; background: var(--white); border-radius: 14px; border: 1px solid var(--border-soft); }
+.success-icon { width: 68px; height: 68px; border-radius: 50%; background: var(--teal-pale); border: 2px solid var(--teal); display: flex; align-items: center; justify-content: center; font-size: 30px; margin: 0 auto 18px; }
+.success-title { font-family: 'Noto Serif SC', serif; font-size: 22px; font-weight: 700; color: var(--navy); margin-bottom: 10px; }
+.success-sub { font-size: 15px; color: var(--text-mid); line-height: 1.7; margin-bottom: 24px; }
+.contact-links { display: flex; flex-direction: column; gap: 10px; }
+.contact-link { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 10px; border: 1.5px solid var(--border); text-decoration: none; font-size: 15px; font-weight: 500; color: var(--navy); transition: all 0.2s; min-height: 52px; }
+.contact-link:active { background: var(--teal-pale); border-color: var(--teal); }
 
-.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
-.form-group { margin-bottom: 20px; }
-.form-label {
-  display: block; font-size: 12px; letter-spacing: 0.08em;
-  color: var(--ink-muted); margin-bottom: 8px;
-  text-transform: uppercase;
-}
-.form-label .req { color: var(--gold); }
-.form-input, .form-select, .form-textarea {
-  width: 100%; padding: 12px 14px;
-  border: 1px solid var(--border-soft);
-  border-radius: 2px; background: var(--cream);
-  font-family: 'Noto Sans SC', sans-serif;
-  font-size: 14px; color: var(--ink);
-  transition: border-color 0.2s;
-  outline: none;
-}
-.form-input:focus, .form-select:focus, .form-textarea:focus {
-  border-color: var(--gold); background: var(--white);
-}
-.form-textarea { resize: vertical; min-height: 100px; line-height: 1.6; }
-.form-select { cursor: pointer; }
-.form-hint { font-size: 11px; color: var(--ink-muted); margin-top: 5px; }
+footer { background: var(--navy); text-align: center; padding: 30px 20px; font-size: 13px; color: rgba(245,237,224,0.5); line-height: 1.9; }
+.footer-logo { font-family: 'Noto Serif SC', serif; font-size: 16px; font-weight: 700; color: var(--cream); margin-bottom: 4px; }
 
-.submit-btn {
-  width: 100%; padding: 16px;
-  background: var(--ink); color: var(--cream);
-  border: none; border-radius: 2px;
-  font-family: 'Noto Serif SC', serif;
-  font-size: 16px; letter-spacing: 0.05em;
-  cursor: pointer; transition: all 0.25s;
-  display: flex; align-items: center; justify-content: center; gap: 10px;
-  margin-top: 8px;
-}
-.submit-btn:hover { background: var(--gold); }
-.submit-btn:disabled { background: #ccc; cursor: not-allowed; }
-.submit-btn .spinner {
-  width: 16px; height: 16px;
-  border: 2px solid rgba(255,255,255,0.3);
-  border-top-color: white;
-  border-radius: 50%;
-  animation: spin 0.6s linear infinite;
-}
-
-/* ── SUCCESS ── */
-.success-card {
-  text-align: center; padding: 60px 40px;
-  background: var(--white); border: 1px solid var(--border-soft);
-  border-radius: 4px;
-}
-.success-icon {
-  width: 64px; height: 64px; border-radius: 50%;
-  background: var(--gold-pale); border: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 28px; margin: 0 auto 24px;
-}
-.success-title {
-  font-family: 'Noto Serif SC', serif;
-  font-size: 24px; font-weight: 300; margin-bottom: 12px;
-}
-.success-sub { font-size: 14px; color: var(--ink-muted); line-height: 1.7; margin-bottom: 32px; }
-.contact-links { display: flex; flex-direction: column; gap: 10px; max-width: 280px; margin: 0 auto; }
-.contact-link {
-  display: flex; align-items: center; gap: 10px;
-  padding: 12px 16px; border: 1px solid var(--border);
-  border-radius: 2px; text-decoration: none;
-  font-size: 13px; color: var(--ink);
-  transition: all 0.2s;
-}
-.contact-link:hover { background: var(--gold-pale); border-color: var(--gold); }
-.contact-link-icon { width: 20px; text-align: center; }
-
-/* ── FOOTER ── */
-footer {
-  text-align: center; padding: 40px 24px;
-  border-top: 1px solid var(--border-soft);
-  font-size: 12px; color: var(--ink-muted); letter-spacing: 0.05em;
-}
-
-/* ── NOTICE ── */
-.no-date-notice {
-  text-align: center; padding: 40px 24px;
-  color: var(--ink-muted); font-size: 14px;
-}
-
-/* ── ANIMATIONS ── */
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-/* ── RESPONSIVE ── */
-@media (max-width: 600px) {
-  .form-row { grid-template-columns: 1fr; }
-  .booking-form-card { padding: 28px 20px; }
-  .hero-stats { gap: 28px; }
-  .hero-stat-num { font-size: 24px; }
-}
-
-/* ── CN/EN TOGGLE ── */
-/* Controlled entirely by JS - no CSS rules needed */
+@keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes spin { to { transform: rotate(360deg); } }
+.en-only { display: none; }
+@media (max-width: 380px) { .form-row { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
 
-<!-- Language Toggle -->
 <div class="lang-bar">
   <button class="lang-btn active" id="btn-cn" onclick="setLang('cn')">中文</button>
   <button class="lang-btn" id="btn-en" onclick="setLang('en')">EN</button>
@@ -391,156 +151,189 @@ footer {
 
 <!-- Hero -->
 <section class="hero">
-  <div class="hero-ornament"></div>
+  <div class="hero-line top"></div>
   <div class="hero-content">
+    <div class="hero-logo-wrap">
+      <svg class="hero-logo-svg" viewBox="0 0 120 130" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M60 8 L108 28 L108 72 Q108 100 60 122 Q12 100 12 72 L12 28 Z" fill="#3d7d8a" opacity="0.85"/>
+        <path d="M60 20 L63.5 31 L75 31 L66 38 L69 49 L60 43 L51 49 L54 38 L45 31 L56.5 31 Z" fill="#1a2f4a"/>
+        <path d="M55 52 Q50 64 47 76 Q44 88 50 98 Q55 106 60 112" stroke="#f5ede0" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+        <path d="M65 52 Q70 64 73 76 Q76 88 70 98 Q65 106 60 112" stroke="#f5ede0" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.45"/>
+      </svg>
+    </div>
     <div class="hero-eyebrow cn-only">定制私家导游 · 美国 · 加拿大 · 墨西哥</div>
     <div class="hero-eyebrow en-only">Private Tour Guide · USA · Canada · Mexico</div>
     <h1 class="hero-title">Orion Pathfinders</h1>
-    <div class="hero-title-cn cn-only">猎户座探路者</div>
-    <p class="hero-desc cn-only">专为华人家庭打造的高端定制导游服务。深度探索北美风土人情，每一程皆是专属体验。</p>
-    <p class="hero-desc en-only">Premium private tour guiding for Chinese families exploring North America. Every journey crafted to your vision.</p>
+    <div class="hero-subtitle cn-only">猎户座探路者</div>
+    <div class="hero-subtitle en-only">Premium Custom Tours</div>
+    <p class="hero-desc cn-only">专为华人家庭打造的高端定制导游服务<br>深度探索北美风土人情，每一程皆是专属体验</p>
+    <p class="hero-desc en-only">Premium private tours for Chinese families across North America. Every journey crafted to your vision.</p>
     <button class="hero-cta" onclick="scrollToCalendar()">
       <span class="cn-only">查看可预约档期</span>
-      <span class="en-only">Check availability</span>
-      <span class="arrow">→</span>
+      <span class="en-only">Check Availability</span>
+      <span>→</span>
     </button>
     <div class="hero-stats">
       <div class="hero-stat">
         <div class="hero-stat-num">10+</div>
         <div class="hero-stat-label cn-only">年导游经验</div>
-        <div class="hero-stat-label en-only">Years Experience</div>
+        <div class="hero-stat-label en-only">Years Exp.</div>
       </div>
       <div class="hero-stat">
         <div class="hero-stat-num">3</div>
         <div class="hero-stat-label cn-only">国家服务区域</div>
-        <div class="hero-stat-label en-only">Countries Covered</div>
+        <div class="hero-stat-label en-only">Countries</div>
       </div>
       <div class="hero-stat">
         <div class="hero-stat-num">100%</div>
         <div class="hero-stat-label cn-only">定制行程</div>
-        <div class="hero-stat-label en-only">Custom Itineraries</div>
+        <div class="hero-stat-label en-only">Custom</div>
       </div>
     </div>
   </div>
-  <div class="hero-ornament-bottom"></div>
+  <div class="hero-line bottom"></div>
 </section>
 
-<!-- Services -->
-<section class="section">
-  <div class="section-label cn-only">我们的服务</div>
-  <div class="section-label en-only">Our Services</div>
-  <h2 class="section-title cn-only">专业定制，深度体验</h2>
-  <h2 class="section-title en-only">Crafted for Every Journey</h2>
-  <div class="divider"></div>
-  <div class="services-grid">
-    <div class="service-card">
-      <div class="service-icon">🏛️</div>
-      <div class="service-name cn-only">名校参观</div>
-      <div class="service-name en-only">University Tours</div>
-      <div class="service-desc cn-only">哈佛、MIT、斯坦福等顶级院校深度参观，助力择校决策</div>
-      <div class="service-desc en-only">In-depth visits to Harvard, MIT, Stanford and top universities</div>
-    </div>
-    <div class="service-card">
-      <div class="service-icon">🏔️</div>
-      <div class="service-name cn-only">国家公园探索</div>
-      <div class="service-name en-only">National Parks</div>
-      <div class="service-desc cn-only">黄石、大峡谷、优胜美地，绝美自然风光私人定制</div>
-      <div class="service-desc en-only">Yellowstone, Grand Canyon, Yosemite — private exploration</div>
-    </div>
-    <div class="service-card">
-      <div class="service-icon">🌆</div>
-      <div class="service-name cn-only">城市深度游</div>
-      <div class="service-name en-only">City Experience</div>
-      <div class="service-desc cn-only">洛杉矶、纽约、旧金山、拉斯维加斯精华深度体验</div>
-      <div class="service-desc en-only">LA, New York, San Francisco, Las Vegas in depth</div>
-    </div>
-    <div class="service-card">
-      <div class="service-icon">🛤️</div>
-      <div class="service-name cn-only">多日长途旅行</div>
-      <div class="service-name en-only">Multi-day Road Trips</div>
-      <div class="service-desc cn-only">跨州自驾、RV旅行、跨国行程一站式定制安排</div>
-      <div class="service-desc en-only">Cross-state drives, RV trips, cross-border journeys</div>
+<!-- 关于 -->
+<section class="about-section">
+  <div class="about-inner">
+    <div class="section-badge cn-only">关于导游</div>
+    <div class="section-badge en-only">Your Guide</div>
+    <h2 class="section-title cn-only">您的专属北美向导</h2>
+    <h2 class="section-title en-only">Your Expert North America Guide</h2>
+    <div class="section-divider"></div>
+    <p class="section-desc cn-only">Leon 扎根洛杉矶十余年，精通中英双语，深谙华人旅行需求。从顶级名校到国家公园，从城市精华到荒野探索，为您量身打造每一次旅程。</p>
+    <p class="section-desc en-only">Leon is based in Los Angeles with over 10 years of experience guiding Chinese families. Fluent in Mandarin and English, specializing in customized VIP experiences.</p>
+    <div class="guide-card">
+      <div class="guide-avatar">🧭</div>
+      <div>
+        <div class="guide-name">Leon</div>
+        <div class="guide-role cn-only">Orion Pathfinders 创始人 · 洛杉矶</div>
+        <div class="guide-role en-only">Founder · Los Angeles, CA</div>
+        <div class="guide-tags">
+          <span class="guide-tag cn-only">中英双语</span>
+          <span class="guide-tag en-only">Bilingual</span>
+          <span class="guide-tag cn-only">私家定制</span>
+          <span class="guide-tag en-only">VIP Custom</span>
+          <span class="guide-tag">LA Base</span>
+        </div>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- Calendar -->
+<!-- 服务 -->
+<section class="services-section">
+  <div class="section-badge cn-only">服务项目</div>
+  <div class="section-badge en-only">Services</div>
+  <h2 class="section-title cn-only">您想探索哪里？</h2>
+  <h2 class="section-title en-only">Where Would You Like to Go?</h2>
+  <div class="section-divider"></div>
+  <div class="service-list">
+    <div class="service-item" onclick="scrollToCalendar()">
+      <div class="service-emoji">🏛️</div>
+      <div class="service-text">
+        <div class="service-name cn-only">名校参观</div>
+        <div class="service-name en-only">University Tours</div>
+        <div class="service-desc cn-only">哈佛、MIT、斯坦福等顶级院校深度参观</div>
+        <div class="service-desc en-only">Harvard, MIT, Stanford & top universities</div>
+      </div>
+      <div class="service-arrow">›</div>
+    </div>
+    <div class="service-item" onclick="scrollToCalendar()">
+      <div class="service-emoji">🏔️</div>
+      <div class="service-text">
+        <div class="service-name cn-only">国家公园探索</div>
+        <div class="service-name en-only">National Parks</div>
+        <div class="service-desc cn-only">黄石、大峡谷、优胜美地私人定制</div>
+        <div class="service-desc en-only">Yellowstone, Grand Canyon, Yosemite</div>
+      </div>
+      <div class="service-arrow">›</div>
+    </div>
+    <div class="service-item" onclick="scrollToCalendar()">
+      <div class="service-emoji">🌆</div>
+      <div class="service-text">
+        <div class="service-name cn-only">城市深度游</div>
+        <div class="service-name en-only">City Experience</div>
+        <div class="service-desc cn-only">洛杉矶、纽约、旧金山、拉斯维加斯</div>
+        <div class="service-desc en-only">LA, New York, San Francisco, Las Vegas</div>
+      </div>
+      <div class="service-arrow">›</div>
+    </div>
+    <div class="service-item" onclick="scrollToCalendar()">
+      <div class="service-emoji">🛤️</div>
+      <div class="service-text">
+        <div class="service-name cn-only">多日长途旅行</div>
+        <div class="service-name en-only">Multi-day Road Trips</div>
+        <div class="service-desc cn-only">跨州自驾、RV旅行、跨国行程定制</div>
+        <div class="service-desc en-only">Cross-state drives, RV & cross-border trips</div>
+      </div>
+      <div class="service-arrow">›</div>
+    </div>
+  </div>
+</section>
+
+<!-- 日历 -->
 <section class="calendar-section" id="calendar-section">
   <div class="calendar-inner">
-    <div class="section-label cn-only">档期查询</div>
-    <div class="section-label en-only">Availability</div>
+    <div class="section-badge cn-only">档期查询</div>
+    <div class="section-badge en-only">Availability</div>
     <h2 class="section-title cn-only">选择您的出行日期</h2>
     <h2 class="section-title en-only">Select Your Travel Date</h2>
-    <div class="divider"></div>
-    <p class="section-sub cn-only" style="margin-bottom:32px">绿色日期可直接预约，点击选择后填写预约信息。如需多日行程，请在备注中说明。</p>
-    <p class="section-sub en-only" style="margin-bottom:32px">Green dates are available. Click to select, then fill in your booking details. For multi-day trips, mention in the notes.</p>
-
-    <div class="calendar-legend">
-      <div class="legend-item"><div class="legend-dot available"></div><span class="cn-only">可预约</span><span class="en-only">Available</span></div>
-      <div class="legend-item"><div class="legend-dot pending"></div><span class="cn-only">洽询中</span><span class="en-only">Pending</span></div>
-      <div class="legend-item"><div class="legend-dot booked"></div><span class="cn-only">已约满</span><span class="en-only">Booked</span></div>
+    <div class="section-divider"></div>
+    <p style="font-size:15px;color:var(--text-mid);line-height:1.75;margin-bottom:18px" class="cn-only">绿色日期可直接预约，点击后填写行程信息。多日行程请在备注中说明。</p>
+    <p style="font-size:15px;color:var(--text-mid);line-height:1.75;margin-bottom:18px;display:none" class="en-only">Green dates are available. Tap to select, then fill in your details.</p>
+    <div class="cal-legend">
+      <div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--green)"></div><span class="cn-only">可预约</span><span class="en-only">Available</span></div>
+      <div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--amber)"></div><span class="cn-only">洽询中</span><span class="en-only">Pending</span></div>
+      <div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--gray)"></div><span class="cn-only">已约满</span><span class="en-only">Booked</span></div>
     </div>
-
     <div class="calendar-nav">
-      <button class="calendar-nav-btn" onclick="prevMonth()">‹</button>
-      <div class="calendar-month-title" id="month-title">加载中...</div>
-      <button class="calendar-nav-btn" onclick="nextMonth()">›</button>
+      <button class="cal-nav-btn" onclick="prevMonth()">‹</button>
+      <div class="cal-month-title" id="month-title">加载中...</div>
+      <button class="cal-nav-btn" onclick="nextMonth()">›</button>
     </div>
-
-    <div class="calendar-grid-header">
-      <div class="cal-weekday cn-only">日</div><div class="cal-weekday cn-only">一</div><div class="cal-weekday cn-only">二</div>
-      <div class="cal-weekday cn-only">三</div><div class="cal-weekday cn-only">四</div><div class="cal-weekday cn-only">五</div><div class="cal-weekday cn-only">六</div>
-      <div class="cal-weekday en-only">Su</div><div class="cal-weekday en-only">Mo</div>
-      <div class="cal-weekday en-only">Tu</div><div class="cal-weekday en-only">We</div>
-      <div class="cal-weekday en-only">Th</div><div class="cal-weekday en-only">Fr</div>
-      <div class="cal-weekday en-only">Sa</div>
+    <div class="cal-weekdays">
+      <div class="cal-weekday cn-only">日</div><div class="cal-weekday cn-only">一</div><div class="cal-weekday cn-only">二</div><div class="cal-weekday cn-only">三</div><div class="cal-weekday cn-only">四</div><div class="cal-weekday cn-only">五</div><div class="cal-weekday cn-only">六</div>
+      <div class="cal-weekday en-only">Su</div><div class="cal-weekday en-only">Mo</div><div class="cal-weekday en-only">Tu</div><div class="cal-weekday en-only">We</div><div class="cal-weekday en-only">Th</div><div class="cal-weekday en-only">Fr</div><div class="cal-weekday en-only">Sa</div>
     </div>
-    <div class="calendar-grid" id="calendar-grid">
-      <div class="calendar-loading">正在加载档期...</div>
-    </div>
+    <div class="cal-grid" id="calendar-grid"></div>
   </div>
 </section>
 
-<!-- Booking Form -->
+<!-- 预约表单 -->
 <section class="booking-section" id="booking-section">
   <div id="no-date-notice" class="no-date-notice">
-    <p class="cn-only">⬆ 请先在上方日历中选择可预约的日期</p>
-    <p class="en-only">⬆ Please select an available date from the calendar above</p>
+    <p class="cn-only">⬆ 请先在上方日历中选择绿色可预约日期</p>
+    <p class="en-only" style="display:none">⬆ Please select an available date from the calendar above</p>
   </div>
-
   <div id="booking-form-wrap" style="display:none">
-    <div class="section-label cn-only">填写预约信息</div>
-    <div class="section-label en-only">Your Booking Details</div>
-    <h2 class="section-title cn-only" style="margin-bottom:32px">告诉我您的行程计划</h2>
-    <h2 class="section-title en-only" style="margin-bottom:32px">Tell Us About Your Trip</h2>
-
+    <div class="section-badge cn-only">填写预约信息</div>
+    <div class="section-badge en-only">Booking Details</div>
+    <h2 class="section-title cn-only" style="margin-bottom:18px">告诉我您的行程计划</h2>
+    <h2 class="section-title en-only" style="display:none;margin-bottom:18px">Tell Us About Your Trip</h2>
     <div class="booking-form-card">
       <div class="selected-date-banner">
-        <span class="date-icon">📅</span>
+        <span style="font-size:22px">📅</span>
         <div class="selected-date-text">
-          <span class="cn-only">已选日期：</span>
-          <span class="en-only">Selected: </span>
+          <span class="cn-only">已选日期：</span><span class="en-only">Selected: </span>
           <strong id="selected-date-display">—</strong>
         </div>
       </div>
-
       <form id="booking-form" onsubmit="submitBooking(event)">
-        <!-- Name -->
         <div class="form-row">
           <div class="form-group">
             <label class="form-label"><span class="cn-only">姓名</span><span class="en-only">Name</span> <span class="req">*</span></label>
-            <input class="form-input" id="f-name" type="text" required placeholder="您的姓名 / Your name">
+            <input class="form-input" id="f-name" type="text" required placeholder="您的姓名">
           </div>
           <div class="form-group">
-            <label class="form-label"><span class="cn-only">微信号</span><span class="en-only">WeChat ID</span></label>
-            <input class="form-input" id="f-wechat" type="text" placeholder="微信 / WeChat">
+            <label class="form-label"><span class="cn-only">微信号</span><span class="en-only">WeChat</span></label>
+            <input class="form-input" id="f-wechat" type="text" placeholder="WeChat ID">
           </div>
         </div>
-
-        <!-- Contact -->
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label"><span class="cn-only">手机 / WhatsApp</span><span class="en-only">Phone / WhatsApp</span></label>
+            <label class="form-label"><span class="cn-only">手机</span><span class="en-only">Phone</span></label>
             <input class="form-input" id="f-phone" type="tel" placeholder="+1 / +86">
           </div>
           <div class="form-group">
@@ -548,8 +341,6 @@ footer {
             <input class="form-input" id="f-email" type="email" placeholder="email@example.com">
           </div>
         </div>
-
-        <!-- Trip Details -->
         <div class="form-row">
           <div class="form-group">
             <label class="form-label"><span class="cn-only">出行人数</span><span class="en-only">Group Size</span> <span class="req">*</span></label>
@@ -558,14 +349,12 @@ footer {
           <div class="form-group">
             <label class="form-label"><span class="cn-only">服务区域</span><span class="en-only">Region</span></label>
             <select class="form-select" id="f-region">
-              <option value="美国">🇺🇸 美国 / USA</option>
-              <option value="加拿大">🇨🇦 加拿大 / Canada</option>
-              <option value="墨西哥">🇲🇽 墨西哥 / Mexico</option>
+              <option value="美国">🇺🇸 美国 USA</option>
+              <option value="加拿大">🇨🇦 加拿大 Canada</option>
+              <option value="墨西哥">🇲🇽 墨西哥 Mexico</option>
             </select>
           </div>
         </div>
-
-        <!-- Service Type -->
         <div class="form-group">
           <label class="form-label"><span class="cn-only">服务类型</span><span class="en-only">Service Type</span></label>
           <select class="form-select" id="f-service">
@@ -577,46 +366,39 @@ footer {
             <option value="其他">📌 其他 / Other</option>
           </select>
         </div>
-
-        <!-- Destination -->
         <div class="form-group">
-          <label class="form-label"><span class="cn-only">目的地 / 行程概述</span><span class="en-only">Destination / Itinerary</span></label>
-          <input class="form-input" id="f-destination" type="text" placeholder="如：洛杉矶 → 拉斯维加斯 → 大峡谷 / e.g. LA → Las Vegas → Grand Canyon">
+          <label class="form-label"><span class="cn-only">目的地 / 行程概述</span><span class="en-only">Destination</span></label>
+          <input class="form-input" id="f-destination" type="text" placeholder="如：洛杉矶 → 拉斯维加斯 → 大峡谷">
         </div>
-
-        <!-- Message -->
         <div class="form-group">
-          <label class="form-label"><span class="cn-only">行程需求与备注</span><span class="en-only">Travel Notes & Requirements</span></label>
-          <textarea class="form-textarea" id="f-message" placeholder="请描述您的行程需求、特别要求、孩子年龄等，越详细越好 / Please describe your requirements, special needs, children's ages, etc."></textarea>
+          <label class="form-label"><span class="cn-only">行程需求与备注</span><span class="en-only">Notes & Requirements</span></label>
+          <textarea class="form-textarea" id="f-message" placeholder="请描述您的需求、特别要求、孩子年龄等..."></textarea>
         </div>
-
         <button class="submit-btn" type="submit" id="submit-btn">
           <span id="submit-text">
             <span class="cn-only">提交预约申请</span>
-            <span class="en-only">Submit Booking Request</span>
+            <span class="en-only">Submit Booking</span>
           </span>
         </button>
-        <p class="form-hint" style="text-align:center;margin-top:12px" id="form-error"></p>
+        <div class="form-error" id="form-error"></div>
       </form>
     </div>
   </div>
-
-  <!-- Success -->
   <div id="success-card" style="display:none">
     <div class="success-card">
       <div class="success-icon">✓</div>
       <h3 class="success-title cn-only">预约申请已收到！</h3>
-      <h3 class="success-title en-only">Booking request received!</h3>
-      <p class="success-sub cn-only">感谢您的信任。Leon 会在 24 小时内与您联系确认档期和报价，请保持微信/手机畅通。</p>
-      <p class="success-sub en-only">Thank you! Leon will contact you within 24 hours to confirm your schedule and provide a quote.</p>
+      <h3 class="success-title en-only">Booking Received!</h3>
+      <p class="success-sub cn-only">感谢您的信任。Leon 会在 24 小时内与您联系确认档期，请保持微信/手机畅通。</p>
+      <p class="success-sub en-only">Thank you! Leon will contact you within 24 hours to confirm your schedule.</p>
       <div class="contact-links">
         <a class="contact-link" href="#" id="wechat-link">
-          <span class="contact-link-icon">💬</span>
+          <span style="font-size:22px">💬</span>
           <span class="cn-only">微信联系 Leon</span>
           <span class="en-only">WeChat Leon</span>
         </a>
         <a class="contact-link" href="mailto:" id="email-link">
-          <span class="contact-link-icon">✉️</span>
+          <span style="font-size:22px">✉️</span>
           <span class="cn-only">发送邮件</span>
           <span class="en-only">Send Email</span>
         </a>
@@ -626,240 +408,140 @@ footer {
 </section>
 
 <footer>
-  <p>© 2025 Orion Pathfinders &nbsp;|&nbsp; Leon &nbsp;|&nbsp; Los Angeles, CA</p>
-  <p style="margin-top:6px">USA · Canada · Mexico Private Tour Guide</p>
+  <div class="footer-logo">Orion Pathfinders · 猎户座探路者</div>
+  <div>Leon · Los Angeles, CA</div>
+  <div>USA · Canada · Mexico Private Tour Guide</div>
 </footer>
 
 <script>
-// ── CONFIG ──
 const SUPABASE_URL = 'https://ehzaucucynwyuhflbxmw.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVoemF1Y3VjeW53eXVoZmxieG13Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1NTkzMjAsImV4cCI6MjA5NDEzNTMyMH0.mfT96M36KZi230LwcXan6BxN47R6IH6GkBt9-v7NWuk';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-// ── STATE ──
 let currentYear, currentMonth, slotsData = {}, selectedDate = null, lang = 'cn';
 
-// ── LANG ──
 function applyLang(l) {
   document.querySelectorAll('.cn-only').forEach(el => {
-    el.style.display = l === 'cn' ? (el.tagName === 'SPAN' ? 'inline' : 'block') : 'none';
+    el.style.display = l==='cn' ? (['SPAN','A','STRONG'].includes(el.tagName) ? 'inline' : 'block') : 'none';
   });
   document.querySelectorAll('.en-only').forEach(el => {
-    el.style.display = l === 'en' ? (el.tagName === 'SPAN' ? 'inline' : 'block') : 'none';
+    el.style.display = l==='en' ? (['SPAN','A','STRONG'].includes(el.tagName) ? 'inline' : 'block') : 'none';
   });
 }
 function setLang(l) {
   lang = l;
-  document.getElementById('btn-cn').classList.toggle('active', l === 'cn');
-  document.getElementById('btn-en').classList.toggle('active', l === 'en');
-  applyLang(l);
-  renderCalendar();
+  document.getElementById('btn-cn').classList.toggle('active', l==='cn');
+  document.getElementById('btn-en').classList.toggle('active', l==='en');
+  applyLang(l); renderCalendar();
 }
-
-// ── SCROLL ──
 function scrollToCalendar() {
-  document.getElementById('calendar-section').scrollIntoView({ behavior: 'smooth' });
+  document.getElementById('calendar-section').scrollIntoView({behavior:'smooth'});
 }
-
-// ── CALENDAR ──
 async function loadSlots(year, month) {
-  const startDate = `${year}-${String(month).padStart(2,'0')}-01`;
-  const lastDay = new Date(year, month, 0).getDate();
-  const endDate   = `${year}-${String(month).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`;
-  const { data, error } = await sb
-    .from('availability_slots')
-    .select('*')
-    .gte('date', startDate)
-    .lte('date', endDate);
-  if (error) {
-    console.error('loadSlots error:', JSON.stringify(error));
-    return;
-  }
-  console.log('slots loaded:', data ? data.length : 0, 'rows for', startDate, 'to', endDate);
+  const s = `${year}-${String(month).padStart(2,'0')}-01`;
+  const ld = new Date(year, month, 0).getDate();
+  const e = `${year}-${String(month).padStart(2,'0')}-${String(ld).padStart(2,'0')}`;
+  const {data, error} = await sb.from('availability_slots').select('*').gte('date',s).lte('date',e);
+  if (error) { console.error(error); return; }
   slotsData = {};
-  (data || []).forEach(s => {
-    if (s.is_visible === false) return; // only skip explicitly false
-    if (s.status === 'blocked') return; // hide blocked slots from public
-    const d = s.date;
-    if (!slotsData[d]) slotsData[d] = [];
-    slotsData[d].push(s);
+  (data||[]).forEach(s => {
+    if (s.is_visible===false || s.status==='blocked') return;
+    if (!slotsData[s.date]) slotsData[s.date] = [];
+    slotsData[s.date].push(s);
   });
-  console.log('slotsData keys:', Object.keys(slotsData));
   renderCalendar();
 }
-
 function getMonthTitle(y, m) {
-  const names_cn = ['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
-  const names_en = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  return lang === 'cn' ? `${y}年 ${names_cn[m-1]}` : `${names_en[m-1]} ${y}`;
+  const cn = ['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
+  const en = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  return lang==='cn' ? `${y}年 ${cn[m-1]}` : `${en[m-1]} ${y}`;
 }
-
 function renderCalendar() {
   document.getElementById('month-title').textContent = getMonthTitle(currentYear, currentMonth);
   const grid = document.getElementById('calendar-grid');
   grid.innerHTML = '';
-
-  // Use LA local date to avoid timezone confusion
-  const nowLA = new Date().toLocaleDateString('en-CA', {timeZone:'America/Los_Angeles'});
+  const nowLA = new Date().toLocaleDateString('en-CA',{timeZone:'America/Los_Angeles'});
   const [ty,tm,td] = nowLA.split('-').map(Number);
-  const today = new Date(ty, tm-1, td);
-  const firstDay = new Date(currentYear, currentMonth - 1, 1).getDay();
-  const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
-
-  for (let i = 0; i < firstDay; i++) {
-    const el = document.createElement('div');
-    el.className = 'cal-day empty';
-    grid.appendChild(el);
-  }
-
-  for (let d = 1; d <= daysInMonth; d++) {
-    const dateStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const date = new Date(currentYear, currentMonth - 1, d);
-    const isPast = date < today && date.getTime() !== today.getTime();
-    const slots = slotsData[dateStr] || [];
-    const isToday = date.getTime() === today.getTime();
-    const isSelected = dateStr === selectedDate;
-
-    // 默认逻辑：未来日期默认可预约，只有数据库中有特殊标注才改变状态
-    let statusClass = isPast ? 'past' : 'available'; // 默认：过去=灰色，未来=绿色可预约
-    if (!isPast && slots.length > 0) {
-      const hasBooked  = slots.some(s => s.status === 'booked');
-      const hasBlocked = slots.some(s => s.status === 'blocked');
-      const hasPending = slots.some(s => s.status === 'pending');
-      const hasAvail   = slots.some(s => s.status === 'available');
-      if (hasBooked)        statusClass = 'booked';    // 已被预约
-      else if (hasBlocked)  statusClass = 'blocked';   // 不开放
-      else if (hasPending)  statusClass = 'pending';   // 洽询中
-      else if (hasAvail)    statusClass = 'available'; // 明确标注可预约
+  const today = new Date(ty,tm-1,td);
+  const firstDay = new Date(currentYear,currentMonth-1,1).getDay();
+  const dim = new Date(currentYear,currentMonth,0).getDate();
+  for (let i=0;i<firstDay;i++){const e=document.createElement('div');e.className='cal-day empty';grid.appendChild(e);}
+  for (let d=1;d<=dim;d++){
+    const ds=`${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const date=new Date(currentYear,currentMonth-1,d);
+    const isPast=date<today&&date.getTime()!==today.getTime();
+    const slots=slotsData[ds]||[];
+    let sc=isPast?'past':'available';
+    if(!isPast&&slots.length>0){
+      if(slots.some(s=>s.status==='booked')) sc='booked';
+      else if(slots.some(s=>s.status==='pending')) sc='pending';
+      else sc='available';
     }
-
-    const el = document.createElement('div');
-    el.className = `cal-day ${statusClass}${isToday ? ' today' : ''}${isSelected ? ' selected' : ''}`;
-    el.innerHTML = `<span class="cal-day-num">${d}</span>${statusClass === 'available' || statusClass === 'pending' ? '<div class="cal-day-dot"></div>' : ''}`;
-
-    if (statusClass === 'available' && !isPast) {
-      el.onclick = () => selectDate(dateStr);
-    }
+    const el=document.createElement('div');
+    el.className=`cal-day ${sc}${date.getTime()===today.getTime()?' today':''}${ds===selectedDate?' selected':''}`;
+    el.innerHTML=`<span class="cal-day-num">${d}</span>${sc==='available'||sc==='pending'?'<div class="cal-day-dot"></div>':''}`;
+    if(sc==='available'&&!isPast) el.onclick=()=>selectDate(ds);
     grid.appendChild(el);
   }
 }
-
-function selectDate(dateStr) {
-  selectedDate = dateStr;
-  renderCalendar();
-  const [y, m, d] = dateStr.split('-');
-  const months_cn = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
-  const months_en = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const display = lang === 'cn'
-    ? `${y}年${months_cn[+m-1]}${+d}日`
-    : `${months_en[+m-1]} ${+d}, ${y}`;
-  document.getElementById('selected-date-display').textContent = display;
-  document.getElementById('no-date-notice').style.display = 'none';
-  document.getElementById('booking-form-wrap').style.display = 'block';
-  document.getElementById('success-card').style.display = 'none';
-  setTimeout(() => document.getElementById('booking-section').scrollIntoView({ behavior: 'smooth' }), 100);
+function selectDate(ds) {
+  selectedDate=ds; renderCalendar();
+  const [y,m,d]=ds.split('-');
+  const cn=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  const en=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('selected-date-display').textContent=
+    lang==='cn'?`${+y}年${cn[+m-1]}${+d}日`:`${en[+m-1]} ${+d}, ${+y}`;
+  document.getElementById('no-date-notice').style.display='none';
+  document.getElementById('booking-form-wrap').style.display='block';
+  document.getElementById('success-card').style.display='none';
+  setTimeout(()=>document.getElementById('booking-section').scrollIntoView({behavior:'smooth'}),100);
 }
+function prevMonth(){currentMonth--;if(currentMonth<1){currentMonth=12;currentYear--;}loadSlots(currentYear,currentMonth);}
+function nextMonth(){currentMonth++;if(currentMonth>12){currentMonth=1;currentYear++;}loadSlots(currentYear,currentMonth);}
 
-function prevMonth() {
-  currentMonth--;
-  if (currentMonth < 1) { currentMonth = 12; currentYear--; }
-  loadSlots(currentYear, currentMonth);
-}
-function nextMonth() {
-  currentMonth++;
-  if (currentMonth > 12) { currentMonth = 1; currentYear++; }
-  loadSlots(currentYear, currentMonth);
-}
-
-// ── FORM SUBMIT ──
 async function submitBooking(e) {
   e.preventDefault();
-  const btn = document.getElementById('submit-btn');
-  const errEl = document.getElementById('form-error');
-  errEl.textContent = '';
-
-  if (!selectedDate) {
-    errEl.textContent = lang === 'cn' ? '请先选择日期' : 'Please select a date first.';
-    return;
-  }
-
-  btn.disabled = true;
-  btn.innerHTML = '<div class="spinner"></div>';
-
-  const name = document.getElementById('f-name').value.trim();
-  const wechat = document.getElementById('f-wechat').value.trim();
-  const phone = document.getElementById('f-phone').value.trim();
-  const email = document.getElementById('f-email').value.trim();
-  const guests = parseInt(document.getElementById('f-guests').value) || 1;
-  const region = document.getElementById('f-region').value;
-  const service = document.getElementById('f-service').value;
-  const destination = document.getElementById('f-destination').value.trim();
-  const message = document.getElementById('f-message').value.trim();
-
+  const btn=document.getElementById('submit-btn');
+  const errEl=document.getElementById('form-error');
+  errEl.textContent='';
+  if(!selectedDate){errEl.textContent=lang==='cn'?'请先选择日期':'Please select a date first.';return;}
+  btn.disabled=true; btn.innerHTML='<div class="spinner"></div>';
   try {
-    // 1. Upsert customer
-    let customerId = null;
-    const { data: custData, error: custErr } = await sb
-      .from('customers')
-      .insert([{ name, wechat, phone, email, country: region, source: '官网' }])
-      .select('id')
-      .single();
-    if (custErr) throw custErr;
-    customerId = custData.id;
-
-    // 2. Find slot id
-    const slots = slotsData[selectedDate] || [];
-    const availSlot = slots.find(s => s.status === 'available');
-    const slotId = availSlot ? null : null; // slot linking optional
-
-    // 3. Insert booking
-    const { error: bookErr } = await sb.from('bookings').insert([{
-      customer_id: customerId,
-      service_type: service,
-      destination,
-      country_area: region,
-      start_date: selectedDate,
-      guest_count: guests,
-      message,
-      status: 'new'
+    const {data:cust,error:ce}=await sb.from('customers').insert([{
+      name:document.getElementById('f-name').value.trim(),
+      wechat:document.getElementById('f-wechat').value.trim(),
+      phone:document.getElementById('f-phone').value.trim(),
+      email:document.getElementById('f-email').value.trim(),
+      country:document.getElementById('f-region').value,
+      source:'官网'
+    }]).select('id').single();
+    if(ce) throw ce;
+    const {error:be}=await sb.from('bookings').insert([{
+      customer_id:cust.id,
+      service_type:document.getElementById('f-service').value,
+      destination:document.getElementById('f-destination').value.trim(),
+      country_area:document.getElementById('f-region').value,
+      start_date:selectedDate,
+      guest_count:parseInt(document.getElementById('f-guests').value)||1,
+      message:document.getElementById('f-message').value.trim(),
+      status:'new'
     }]);
-    if (bookErr) throw bookErr;
-
-    // Success
-    document.getElementById('booking-form-wrap').style.display = 'none';
-    document.getElementById('success-card').style.display = 'block';
-    document.getElementById('success-card').scrollIntoView({ behavior: 'smooth' });
-
-    // Load contact info
-    loadContactInfo();
-
-  } catch (err) {
+    if(be) throw be;
+    document.getElementById('booking-form-wrap').style.display='none';
+    document.getElementById('success-card').style.display='block';
+    document.getElementById('success-card').scrollIntoView({behavior:'smooth'});
+    const {data:cfg}=await sb.from('admin_settings').select('setting_key,setting_value').in('setting_key',['contact_email']);
+    if(cfg){const em=cfg.find(d=>d.setting_key==='contact_email')?.setting_value||'';if(em)document.getElementById('email-link').href=`mailto:${em}`;}
+  } catch(err) {
     console.error(err);
-    errEl.textContent = lang === 'cn'
-      ? '提交失败，请稍后重试或直接微信联系Leon'
-      : 'Submission failed. Please try again or contact Leon directly via WeChat.';
-    btn.disabled = false;
-    btn.innerHTML = `<span id="submit-text"><span class="${lang==='cn'?'cn-only':'en-only'}">${lang==='cn'?'提交预约申请':'Submit Booking Request'}</span></span>`;
+    errEl.textContent=lang==='cn'?'提交失败，请稍后重试或直接微信联系Leon':'Submission failed. Please contact Leon via WeChat.';
+    btn.disabled=false;
+    btn.innerHTML=`<span id="submit-text"><span class="cn-only">${lang==='cn'?'提交预约申请':''}</span><span class="en-only">${lang==='en'?'Submit Booking':''}</span></span>`;
   }
 }
-
-async function loadContactInfo() {
-  const { data } = await sb.from('admin_settings').select('setting_key,setting_value')
-    .in('setting_key', ['contact_wechat','contact_email']);
-  if (data) {
-    const wechat = data.find(d => d.setting_key === 'contact_wechat')?.setting_value || '';
-    const email  = data.find(d => d.setting_key === 'contact_email')?.setting_value || '';
-    if (email) document.getElementById('email-link').href = `mailto:${email}`;
-  }
-}
-
-// ── INIT ──
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded',()=>{
   applyLang('cn');
-  const now = new Date();
-  currentYear  = now.getFullYear();
-  currentMonth = now.getMonth() + 1;
-  loadSlots(currentYear, currentMonth);
+  const now=new Date(); currentYear=now.getFullYear(); currentMonth=now.getMonth()+1;
+  loadSlots(currentYear,currentMonth);
 });
 </script>
 </body>
