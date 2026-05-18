@@ -378,12 +378,7 @@ footer {
 }
 
 /* ── CN/EN TOGGLE ── */
-.en-only { display: none !important; }
-body.en .cn-only { display: none !important; }
-body.en .en-only { display: block !important; }
-body.en span.en-only { display: inline !important; }
-body.en .en-inline { display: inline !important; }
-body.en .cn-inline { display: none !important; }
+/* Controlled entirely by JS - no CSS rules needed */
 </style>
 </head>
 <body>
@@ -399,31 +394,31 @@ body.en .cn-inline { display: none !important; }
   <div class="hero-ornament"></div>
   <div class="hero-content">
     <div class="hero-eyebrow cn-only">定制私家导游 · 美国 · 加拿大 · 墨西哥</div>
-    <div class="hero-eyebrow en-only" style="display:none">Private Tour Guide · USA · Canada · Mexico</div>
+    <div class="hero-eyebrow en-only">Private Tour Guide · USA · Canada · Mexico</div>
     <h1 class="hero-title">Orion Pathfinders</h1>
     <div class="hero-title-cn cn-only">猎户座探路者</div>
     <p class="hero-desc cn-only">专为华人家庭打造的高端定制导游服务。深度探索北美风土人情，每一程皆是专属体验。</p>
-    <p class="hero-desc en-only" style="display:none">Premium private tour guiding for Chinese families exploring North America. Every journey crafted to your vision.</p>
+    <p class="hero-desc en-only">Premium private tour guiding for Chinese families exploring North America. Every journey crafted to your vision.</p>
     <button class="hero-cta" onclick="scrollToCalendar()">
       <span class="cn-only">查看可预约档期</span>
-      <span class="en-only" style="display:none">Check availability</span>
+      <span class="en-only">Check availability</span>
       <span class="arrow">→</span>
     </button>
     <div class="hero-stats">
       <div class="hero-stat">
         <div class="hero-stat-num">10+</div>
         <div class="hero-stat-label cn-only">年导游经验</div>
-        <div class="hero-stat-label en-only" style="display:none">Years Experience</div>
+        <div class="hero-stat-label en-only">Years Experience</div>
       </div>
       <div class="hero-stat">
         <div class="hero-stat-num">3</div>
         <div class="hero-stat-label cn-only">国家服务区域</div>
-        <div class="hero-stat-label en-only" style="display:none">Countries Covered</div>
+        <div class="hero-stat-label en-only">Countries Covered</div>
       </div>
       <div class="hero-stat">
         <div class="hero-stat-num">100%</div>
         <div class="hero-stat-label cn-only">定制行程</div>
-        <div class="hero-stat-label en-only" style="display:none">Custom Itineraries</div>
+        <div class="hero-stat-label en-only">Custom Itineraries</div>
       </div>
     </div>
   </div>
@@ -433,38 +428,38 @@ body.en .cn-inline { display: none !important; }
 <!-- Services -->
 <section class="section">
   <div class="section-label cn-only">我们的服务</div>
-  <div class="section-label en-only" style="display:none">Our Services</div>
+  <div class="section-label en-only">Our Services</div>
   <h2 class="section-title cn-only">专业定制，深度体验</h2>
-  <h2 class="section-title en-only" style="display:none">Crafted for Every Journey</h2>
+  <h2 class="section-title en-only">Crafted for Every Journey</h2>
   <div class="divider"></div>
   <div class="services-grid">
     <div class="service-card">
       <div class="service-icon">🏛️</div>
       <div class="service-name cn-only">名校参观</div>
-      <div class="service-name en-only" style="display:none">University Tours</div>
+      <div class="service-name en-only">University Tours</div>
       <div class="service-desc cn-only">哈佛、MIT、斯坦福等顶级院校深度参观，助力择校决策</div>
-      <div class="service-desc en-only" style="display:none">In-depth visits to Harvard, MIT, Stanford and top universities</div>
+      <div class="service-desc en-only">In-depth visits to Harvard, MIT, Stanford and top universities</div>
     </div>
     <div class="service-card">
       <div class="service-icon">🏔️</div>
       <div class="service-name cn-only">国家公园探索</div>
-      <div class="service-name en-only" style="display:none">National Parks</div>
+      <div class="service-name en-only">National Parks</div>
       <div class="service-desc cn-only">黄石、大峡谷、优胜美地，绝美自然风光私人定制</div>
-      <div class="service-desc en-only" style="display:none">Yellowstone, Grand Canyon, Yosemite — private exploration</div>
+      <div class="service-desc en-only">Yellowstone, Grand Canyon, Yosemite — private exploration</div>
     </div>
     <div class="service-card">
       <div class="service-icon">🌆</div>
       <div class="service-name cn-only">城市深度游</div>
-      <div class="service-name en-only" style="display:none">City Experience</div>
+      <div class="service-name en-only">City Experience</div>
       <div class="service-desc cn-only">洛杉矶、纽约、旧金山、拉斯维加斯精华深度体验</div>
-      <div class="service-desc en-only" style="display:none">LA, New York, San Francisco, Las Vegas in depth</div>
+      <div class="service-desc en-only">LA, New York, San Francisco, Las Vegas in depth</div>
     </div>
     <div class="service-card">
       <div class="service-icon">🛤️</div>
       <div class="service-name cn-only">多日长途旅行</div>
-      <div class="service-name en-only" style="display:none">Multi-day Road Trips</div>
+      <div class="service-name en-only">Multi-day Road Trips</div>
       <div class="service-desc cn-only">跨州自驾、RV旅行、跨国行程一站式定制安排</div>
-      <div class="service-desc en-only" style="display:none">Cross-state drives, RV trips, cross-border journeys</div>
+      <div class="service-desc en-only">Cross-state drives, RV trips, cross-border journeys</div>
     </div>
   </div>
 </section>
@@ -473,17 +468,17 @@ body.en .cn-inline { display: none !important; }
 <section class="calendar-section" id="calendar-section">
   <div class="calendar-inner">
     <div class="section-label cn-only">档期查询</div>
-    <div class="section-label en-only" style="display:none">Availability</div>
+    <div class="section-label en-only">Availability</div>
     <h2 class="section-title cn-only">选择您的出行日期</h2>
-    <h2 class="section-title en-only" style="display:none">Select Your Travel Date</h2>
+    <h2 class="section-title en-only">Select Your Travel Date</h2>
     <div class="divider"></div>
     <p class="section-sub cn-only" style="margin-bottom:32px">绿色日期可直接预约，点击选择后填写预约信息。如需多日行程，请在备注中说明。</p>
-    <p class="section-sub en-only" style="display:none;margin-bottom:32px">Green dates are available. Click to select, then fill in your booking details. For multi-day trips, mention in the notes.</p>
+    <p class="section-sub en-only" style="margin-bottom:32px">Green dates are available. Click to select, then fill in your booking details. For multi-day trips, mention in the notes.</p>
 
     <div class="calendar-legend">
-      <div class="legend-item"><div class="legend-dot available"></div><span class="cn-only">可预约</span><span class="en-only" style="display:none">Available</span></div>
-      <div class="legend-item"><div class="legend-dot pending"></div><span class="cn-only">洽询中</span><span class="en-only" style="display:none">Pending</span></div>
-      <div class="legend-item"><div class="legend-dot booked"></div><span class="cn-only">已约满</span><span class="en-only" style="display:none">Booked</span></div>
+      <div class="legend-item"><div class="legend-dot available"></div><span class="cn-only">可预约</span><span class="en-only">Available</span></div>
+      <div class="legend-item"><div class="legend-dot pending"></div><span class="cn-only">洽询中</span><span class="en-only">Pending</span></div>
+      <div class="legend-item"><div class="legend-dot booked"></div><span class="cn-only">已约满</span><span class="en-only">Booked</span></div>
     </div>
 
     <div class="calendar-nav">
@@ -495,10 +490,10 @@ body.en .cn-inline { display: none !important; }
     <div class="calendar-grid-header">
       <div class="cal-weekday cn-only">日</div><div class="cal-weekday cn-only">一</div><div class="cal-weekday cn-only">二</div>
       <div class="cal-weekday cn-only">三</div><div class="cal-weekday cn-only">四</div><div class="cal-weekday cn-only">五</div><div class="cal-weekday cn-only">六</div>
-      <div class="cal-weekday en-only" style="display:none">Su</div><div class="cal-weekday en-only" style="display:none">Mo</div>
-      <div class="cal-weekday en-only" style="display:none">Tu</div><div class="cal-weekday en-only" style="display:none">We</div>
-      <div class="cal-weekday en-only" style="display:none">Th</div><div class="cal-weekday en-only" style="display:none">Fr</div>
-      <div class="cal-weekday en-only" style="display:none">Sa</div>
+      <div class="cal-weekday en-only">Su</div><div class="cal-weekday en-only">Mo</div>
+      <div class="cal-weekday en-only">Tu</div><div class="cal-weekday en-only">We</div>
+      <div class="cal-weekday en-only">Th</div><div class="cal-weekday en-only">Fr</div>
+      <div class="cal-weekday en-only">Sa</div>
     </div>
     <div class="calendar-grid" id="calendar-grid">
       <div class="calendar-loading">正在加载档期...</div>
@@ -510,21 +505,21 @@ body.en .cn-inline { display: none !important; }
 <section class="booking-section" id="booking-section">
   <div id="no-date-notice" class="no-date-notice">
     <p class="cn-only">⬆ 请先在上方日历中选择可预约的日期</p>
-    <p class="en-only" style="display:none">⬆ Please select an available date from the calendar above</p>
+    <p class="en-only">⬆ Please select an available date from the calendar above</p>
   </div>
 
   <div id="booking-form-wrap" style="display:none">
     <div class="section-label cn-only">填写预约信息</div>
-    <div class="section-label en-only" style="display:none">Your Booking Details</div>
+    <div class="section-label en-only">Your Booking Details</div>
     <h2 class="section-title cn-only" style="margin-bottom:32px">告诉我您的行程计划</h2>
-    <h2 class="section-title en-only" style="display:none;margin-bottom:32px">Tell Us About Your Trip</h2>
+    <h2 class="section-title en-only" style="margin-bottom:32px">Tell Us About Your Trip</h2>
 
     <div class="booking-form-card">
       <div class="selected-date-banner">
         <span class="date-icon">📅</span>
         <div class="selected-date-text">
           <span class="cn-only">已选日期：</span>
-          <span class="en-only" style="display:none">Selected: </span>
+          <span class="en-only">Selected: </span>
           <strong id="selected-date-display">—</strong>
         </div>
       </div>
@@ -533,11 +528,11 @@ body.en .cn-inline { display: none !important; }
         <!-- Name -->
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label"><span class="cn-only">姓名</span><span class="en-only" style="display:none">Name</span> <span class="req">*</span></label>
+            <label class="form-label"><span class="cn-only">姓名</span><span class="en-only">Name</span> <span class="req">*</span></label>
             <input class="form-input" id="f-name" type="text" required placeholder="您的姓名 / Your name">
           </div>
           <div class="form-group">
-            <label class="form-label"><span class="cn-only">微信号</span><span class="en-only" style="display:none">WeChat ID</span></label>
+            <label class="form-label"><span class="cn-only">微信号</span><span class="en-only">WeChat ID</span></label>
             <input class="form-input" id="f-wechat" type="text" placeholder="微信 / WeChat">
           </div>
         </div>
@@ -545,11 +540,11 @@ body.en .cn-inline { display: none !important; }
         <!-- Contact -->
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label"><span class="cn-only">手机 / WhatsApp</span><span class="en-only" style="display:none">Phone / WhatsApp</span></label>
+            <label class="form-label"><span class="cn-only">手机 / WhatsApp</span><span class="en-only">Phone / WhatsApp</span></label>
             <input class="form-input" id="f-phone" type="tel" placeholder="+1 / +86">
           </div>
           <div class="form-group">
-            <label class="form-label"><span class="cn-only">邮箱</span><span class="en-only" style="display:none">Email</span></label>
+            <label class="form-label"><span class="cn-only">邮箱</span><span class="en-only">Email</span></label>
             <input class="form-input" id="f-email" type="email" placeholder="email@example.com">
           </div>
         </div>
@@ -557,11 +552,11 @@ body.en .cn-inline { display: none !important; }
         <!-- Trip Details -->
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label"><span class="cn-only">出行人数</span><span class="en-only" style="display:none">Group Size</span> <span class="req">*</span></label>
+            <label class="form-label"><span class="cn-only">出行人数</span><span class="en-only">Group Size</span> <span class="req">*</span></label>
             <input class="form-input" id="f-guests" type="number" min="1" max="20" required placeholder="1">
           </div>
           <div class="form-group">
-            <label class="form-label"><span class="cn-only">服务区域</span><span class="en-only" style="display:none">Region</span></label>
+            <label class="form-label"><span class="cn-only">服务区域</span><span class="en-only">Region</span></label>
             <select class="form-select" id="f-region">
               <option value="美国">🇺🇸 美国 / USA</option>
               <option value="加拿大">🇨🇦 加拿大 / Canada</option>
@@ -572,7 +567,7 @@ body.en .cn-inline { display: none !important; }
 
         <!-- Service Type -->
         <div class="form-group">
-          <label class="form-label"><span class="cn-only">服务类型</span><span class="en-only" style="display:none">Service Type</span></label>
+          <label class="form-label"><span class="cn-only">服务类型</span><span class="en-only">Service Type</span></label>
           <select class="form-select" id="f-service">
             <option value="城市观光">🌆 城市观光 / City Tour</option>
             <option value="名校参观">🏛️ 名校参观 / University Visit</option>
@@ -585,20 +580,20 @@ body.en .cn-inline { display: none !important; }
 
         <!-- Destination -->
         <div class="form-group">
-          <label class="form-label"><span class="cn-only">目的地 / 行程概述</span><span class="en-only" style="display:none">Destination / Itinerary</span></label>
+          <label class="form-label"><span class="cn-only">目的地 / 行程概述</span><span class="en-only">Destination / Itinerary</span></label>
           <input class="form-input" id="f-destination" type="text" placeholder="如：洛杉矶 → 拉斯维加斯 → 大峡谷 / e.g. LA → Las Vegas → Grand Canyon">
         </div>
 
         <!-- Message -->
         <div class="form-group">
-          <label class="form-label"><span class="cn-only">行程需求与备注</span><span class="en-only" style="display:none">Travel Notes & Requirements</span></label>
+          <label class="form-label"><span class="cn-only">行程需求与备注</span><span class="en-only">Travel Notes & Requirements</span></label>
           <textarea class="form-textarea" id="f-message" placeholder="请描述您的行程需求、特别要求、孩子年龄等，越详细越好 / Please describe your requirements, special needs, children's ages, etc."></textarea>
         </div>
 
         <button class="submit-btn" type="submit" id="submit-btn">
           <span id="submit-text">
             <span class="cn-only">提交预约申请</span>
-            <span class="en-only" style="display:none">Submit Booking Request</span>
+            <span class="en-only">Submit Booking Request</span>
           </span>
         </button>
         <p class="form-hint" style="text-align:center;margin-top:12px" id="form-error"></p>
@@ -611,19 +606,19 @@ body.en .cn-inline { display: none !important; }
     <div class="success-card">
       <div class="success-icon">✓</div>
       <h3 class="success-title cn-only">预约申请已收到！</h3>
-      <h3 class="success-title en-only" style="display:none">Booking request received!</h3>
+      <h3 class="success-title en-only">Booking request received!</h3>
       <p class="success-sub cn-only">感谢您的信任。Leon 会在 24 小时内与您联系确认档期和报价，请保持微信/手机畅通。</p>
-      <p class="success-sub en-only" style="display:none">Thank you! Leon will contact you within 24 hours to confirm your schedule and provide a quote.</p>
+      <p class="success-sub en-only">Thank you! Leon will contact you within 24 hours to confirm your schedule and provide a quote.</p>
       <div class="contact-links">
         <a class="contact-link" href="#" id="wechat-link">
           <span class="contact-link-icon">💬</span>
           <span class="cn-only">微信联系 Leon</span>
-          <span class="en-only" style="display:none">WeChat Leon</span>
+          <span class="en-only">WeChat Leon</span>
         </a>
         <a class="contact-link" href="mailto:" id="email-link">
           <span class="contact-link-icon">✉️</span>
           <span class="cn-only">发送邮件</span>
-          <span class="en-only" style="display:none">Send Email</span>
+          <span class="en-only">Send Email</span>
         </a>
       </div>
     </div>
@@ -646,8 +641,12 @@ let currentYear, currentMonth, slotsData = {}, selectedDate = null, lang = 'cn';
 
 // ── LANG ──
 function applyLang(l) {
-  document.querySelectorAll('.cn-only').forEach(el => { el.style.display = l === 'cn' ? '' : 'none'; });
-  document.querySelectorAll('.en-only').forEach(el => { el.style.display = l === 'en' ? '' : 'none'; });
+  document.querySelectorAll('.cn-only').forEach(el => {
+    el.style.display = l === 'cn' ? (el.tagName === 'SPAN' ? 'inline' : 'block') : 'none';
+  });
+  document.querySelectorAll('.en-only').forEach(el => {
+    el.style.display = l === 'en' ? (el.tagName === 'SPAN' ? 'inline' : 'block') : 'none';
+  });
 }
 function setLang(l) {
   lang = l;
@@ -668,18 +667,23 @@ async function loadSlots(year, month) {
   const endDate   = `${year}-${String(month).padStart(2,'0')}-31`;
   const { data, error } = await sb
     .from('availability_slots')
-    .select('date, period, status, public_note, is_visible')
+    .select('*')
     .gte('date', startDate)
-    .lte('date', endDate)
-    .in('status', ['available', 'pending', 'booked']);
-  if (error) { console.error('loadSlots error:', error); return; }
+    .lte('date', endDate);
+  if (error) {
+    console.error('loadSlots error:', JSON.stringify(error));
+    return;
+  }
+  console.log('slots loaded:', data ? data.length : 0, 'rows for', startDate, 'to', endDate);
   slotsData = {};
   (data || []).forEach(s => {
-    if (s.is_visible === false) return;
+    if (s.is_visible === false) return; // only skip explicitly false
+    if (s.status === 'blocked') return; // hide blocked slots from public
     const d = s.date;
     if (!slotsData[d]) slotsData[d] = [];
     slotsData[d].push(s);
   });
+  console.log('slotsData keys:', Object.keys(slotsData));
   renderCalendar();
 }
 
