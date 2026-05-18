@@ -378,9 +378,10 @@ footer {
 }
 
 /* ── CN/EN TOGGLE ── */
-.en-only { display: none; }
-body.en .cn-only { display: none; }
-body.en .en-only { display: block; }
+.en-only { display: none !important; }
+body.en .cn-only { display: none !important; }
+body.en .en-only { display: block !important; }
+body.en span.en-only { display: inline !important; }
 body.en .en-inline { display: inline !important; }
 body.en .cn-inline { display: none !important; }
 </style>
@@ -644,11 +645,15 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let currentYear, currentMonth, slotsData = {}, selectedDate = null, lang = 'cn';
 
 // ── LANG ──
+function applyLang(l) {
+  document.querySelectorAll('.cn-only').forEach(el => { el.style.display = l === 'cn' ? '' : 'none'; });
+  document.querySelectorAll('.en-only').forEach(el => { el.style.display = l === 'en' ? '' : 'none'; });
+}
 function setLang(l) {
   lang = l;
-  document.body.classList.toggle('en', l === 'en');
   document.getElementById('btn-cn').classList.toggle('active', l === 'cn');
   document.getElementById('btn-en').classList.toggle('active', l === 'en');
+  applyLang(l);
   renderCalendar();
 }
 
@@ -663,13 +668,14 @@ async function loadSlots(year, month) {
   const endDate   = `${year}-${String(month).padStart(2,'0')}-31`;
   const { data, error } = await sb
     .from('availability_slots')
-    .select('date, period, status, public_note')
+    .select('date, period, status, public_note, is_visible')
     .gte('date', startDate)
     .lte('date', endDate)
-    .eq('is_visible', true);
-  if (error) { console.error(error); return; }
+    .in('status', ['available', 'pending', 'booked']);
+  if (error) { console.error('loadSlots error:', error); return; }
   slotsData = {};
   (data || []).forEach(s => {
+    if (s.is_visible === false) return;
     const d = s.date;
     if (!slotsData[d]) slotsData[d] = [];
     slotsData[d].push(s);
@@ -702,7 +708,7 @@ function renderCalendar() {
   for (let d = 1; d <= daysInMonth; d++) {
     const dateStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const date = new Date(currentYear, currentMonth - 1, d);
-    const isPast = date < today;
+    const isPast = date < today && date.getTime() !== today.getTime();
     const slots = slotsData[dateStr] || [];
     const isToday = date.getTime() === today.getTime();
     const isSelected = dateStr === selectedDate;
@@ -840,10 +846,13 @@ async function loadContactInfo() {
 }
 
 // ── INIT ──
-const now = new Date();
-currentYear  = now.getFullYear();
-currentMonth = now.getMonth() + 1;
-loadSlots(currentYear, currentMonth);
+document.addEventListener('DOMContentLoaded', function() {
+  applyLang('cn');
+  const now = new Date();
+  currentYear  = now.getFullYear();
+  currentMonth = now.getMonth() + 1;
+  loadSlots(currentYear, currentMonth);
+});
 </script>
 </body>
 </html>
