@@ -699,8 +699,10 @@ function renderCalendar() {
   const grid = document.getElementById('calendar-grid');
   grid.innerHTML = '';
 
-  const today = new Date();
-  today.setHours(0,0,0,0);
+  // Use LA local date to avoid timezone confusion
+  const nowLA = new Date().toLocaleDateString('en-CA', {timeZone:'America/Los_Angeles'});
+  const [ty,tm,td] = nowLA.split('-').map(Number);
+  const today = new Date(ty, tm-1, td);
   const firstDay = new Date(currentYear, currentMonth - 1, 1).getDay();
   const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
 
