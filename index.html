@@ -33,7 +33,7 @@ body { font-family: 'Noto Sans SC', sans-serif; background: var(--cream-bg); col
 .lang-btn { font-size: 14px; font-weight: 500; padding: 6px 16px; border-radius: 20px; border: 1.5px solid var(--border); background: var(--white); color: var(--text-mid); cursor: pointer; transition: all 0.2s; min-height: 36px; box-shadow: 0 1px 6px rgba(26,47,74,0.1); }
 .lang-btn.active { background: var(--teal); color: var(--white); border-color: var(--teal); }
 
-.hero { background: var(--cream-bg); min-height: 100svh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 80px 24px 48px; position: relative; overflow: hidden; border-bottom: 3px solid var(--teal); }
+.hero { background: var(--cream-bg); min-height: 100svh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 48px 24px 40px; position: relative; overflow: hidden; border-bottom: 3px solid var(--teal); }
 .hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 70% 50% at 50% 20%, rgba(61,125,138,0.08) 0%, transparent 70%); }
 .hero-line { position: absolute; left: 50%; transform: translateX(-50%); width: 1px; }
 .hero-line.top { top: 0; height: 60px; background: linear-gradient(to bottom, transparent, rgba(61,125,138,0.3)); }
@@ -41,12 +41,7 @@ body { font-family: 'Noto Sans SC', sans-serif; background: var(--cream-bg); col
 .hero-content { position: relative; z-index: 1; max-width: 560px; width: 100%; }
 
 .hero-logo-wrap { margin-bottom: 20px; opacity: 0; animation: fadeUp 0.7s 0.1s forwards; }
-.hero-logo-img { 
-  width: 100px; height: 100px; 
-  object-fit: contain;
-  border-radius: 12px;
-  background: transparent;
-}
+.hero-logo-img { width: 140px; height: 140px; object-fit: contain; background: transparent; }
 
 .hero-eyebrow { font-size: 12px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--teal); margin-bottom: 14px; opacity: 0; animation: fadeUp 0.7s 0.25s forwards; }
 .hero-title { font-family: 'Noto Serif SC', serif; font-size: clamp(30px, 8vw, 50px); font-weight: 700; line-height: 1.15; color: var(--navy); margin-bottom: 6px; opacity: 0; animation: fadeUp 0.7s 0.35s forwards; }
