@@ -594,17 +594,19 @@ async function submitBooking(e) {
   if(!selectedDate){errEl.textContent=lang==='cn'?'请先选择日期':'Please select a date first.';return;}
   btn.disabled=true; btn.innerHTML='<div class="spinner"></div>';
   try {
-    const {data:cust,error:ce}=await sb.from('customers').insert([{
+    const custId=crypto.randomUUID();
+    const {error:ce}=await sb.from('customers').insert([{
+      id:custId,
       name:document.getElementById('f-name').value.trim(),
       wechat:document.getElementById('f-wechat').value.trim(),
       phone:document.getElementById('f-phone').value.trim(),
       email:document.getElementById('f-email').value.trim(),
       country:document.getElementById('f-region').value,
       source:'官网'
-    }]).select('id').single();
+    }]);
     if(ce) throw ce;
     const {error:be}=await sb.from('bookings').insert([{
-      customer_id:cust.id,
+      customer_id:custId,
       service_type:document.getElementById('f-service').value,
       destination:document.getElementById('f-destination').value.trim(),
       country_area:document.getElementById('f-region').value,
