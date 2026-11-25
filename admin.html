@@ -255,9 +255,10 @@ tr:hover td { background: #fdfcfa; }
   <div class="login-box">
     <div class="login-logo">ORION PATHFINDERS</div>
     <div class="login-title">管理员登录</div>
-    <input class="login-input" type="password" id="pwd-input" placeholder="输入管理密码" onkeydown="if(event.key==='Enter')doLogin()">
-    <button class="login-btn" onclick="doLogin()">登录</button>
+    <input class="login-input" type="email" id="email-input" placeholder="管理员邮箱" value="clizmanus@gmail.com" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" id="login-btn" onclick="doLogin()">发送登录链接到邮箱</button>
     <div class="login-err" id="login-err"></div>
+    <div id="login-msg" style="font-size:13px;margin-top:10px;line-height:1.6"></div>
   </div>
 </div>
 
@@ -483,24 +484,51 @@ function badge(status) {
   return `<span class="badge badge-${status}">${labels[status]||status}</span>`;
 }
 
-// ── LOGIN ──
+// ── LOGIN（Supabase 邮箱登录链接，无需密码）──
+const ADMIN_EMAIL = 'clizmanus@gmail.com';
+let appStarted = false;
+
 async function doLogin() {
-  const pwd = document.getElementById('pwd-input').value;
-  const { data } = await sb.from('admin_settings').select('setting_value').eq('setting_key','admin_password').single();
-  const correct = data?.setting_value || 'orion2024';
-  if (pwd === correct) {
-    adminPwd = pwd;
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app').style.display = 'flex';
-    initApp();
-  } else {
-    document.getElementById('login-err').textContent = '密码错误，请重试';
-  }
+  const email = document.getElementById('email-input').value.trim().toLowerCase();
+  const errEl = document.getElementById('login-err');
+  const msgEl = document.getElementById('login-msg');
+  errEl.textContent = ''; msgEl.textContent = '';
+  if (!email) { errEl.textContent = '请输入邮箱'; return; }
+  const btn = document.getElementById('login-btn');
+  btn.disabled = true;
+  const { error } = await sb.auth.signInWithOtp({
+    email,
+    options: { emailRedirectTo: location.origin + location.pathname }
+  });
+  btn.disabled = false;
+  if (error) { errEl.textContent = '发送失败：' + error.message; return; }
+  msgEl.textContent = '登录链接已发送到 ' + email + '，请打开邮件点击链接即可登录（这台电脑之后会保持登录）。';
 }
-function logout() {
-  document.getElementById('login-screen').style.display = 'flex';
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('pwd-input').value = '';
+
+function showApp(session) {
+  const email = (session?.user?.email || '').toLowerCase();
+  if (!session) {
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('app').style.display = 'none';
+    return;
+  }
+  if (email !== ADMIN_EMAIL) {
+    document.getElementById('login-err').textContent = '此邮箱没有管理权限：' + email;
+    sb.auth.signOut();
+    return;
+  }
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  if (!appStarted) { appStarted = true; initApp(); }
+}
+
+sb.auth.getSession().then(({ data }) => showApp(data.session));
+sb.auth.onAuthStateChange((_event, session) => showApp(session));
+
+async function logout() {
+  await sb.auth.signOut();
+  appStarted = false;
+  showApp(null);
 }
 
 // ── INIT ──
@@ -1234,11 +1262,11 @@ function calNext() { calMonth++; if(calMonth>12){calMonth=1;calYear++;} loadCale
 
 // ── SETTINGS ──
 async function loadSettings() {
-  const { data } = await sb.from('admin_settings').select('*').order('setting_key');
+  const { data } = await sb.from('admin_settings').select('*').neq('setting_key','admin_password').order('setting_key');
   const el = document.getElementById('settings-content');
   if (!data) { el.innerHTML = '加载失败'; return; }
   const labels = {
-    admin_password:'管理员密码',company_name:'公司名称',guide_name:'导游姓名',
+    company_name:'公司名称',guide_name:'导游姓名',
     contact_email:'联系邮箱',contact_wechat:'微信号',contact_whatsapp:'WhatsApp',
     default_currency:'默认币种',default_language:'默认语言',service_areas:'服务区域'
   };
