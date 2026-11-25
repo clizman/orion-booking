@@ -33,4 +33,7 @@ jobs:
   keepalive:
     runs-on: ubuntu-latest
     steps:
-      - uses: gautamkrishnar/keepalive-workflow@v2
+      - name: Re-enable this workflow (resets GitHub's 60-day inactivity timer)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/supabase-keepalive.yml/enable"
